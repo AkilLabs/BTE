@@ -1,15 +1,19 @@
-import Hero from './components/Hero';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import UserHome from './pages/user/UserHome';
+import Auth from './pages/common/Auth';
+import Signup from './pages/common/Signup';
 
 function App() {
-  const handleGetStarted = () => {
-    const generator = document.getElementById('generator');
-    generator?.scrollIntoView({ behavior: 'smooth' });
-  };
-
   return (
-    <div className="min-h-screen">
-      <Hero onGetStarted={handleGetStarted} />
-    </div>
+    <BrowserRouter>
+      <div className="min-h-screen">
+        <Routes>
+          <Route path="/" element={<UserHome />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/signup" element={<Signup />} />
+        </Routes>
+      </div>
+    </BrowserRouter>
   );
 }
 
