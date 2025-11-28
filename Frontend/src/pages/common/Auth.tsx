@@ -16,12 +16,12 @@ export default function Auth() {
             Sign Up
           </Link>
 
-          <button
-            className="w-full bg-black border border-white text-white font-medium rounded-full px-6 py-3"
-            type="button"
+          <Link
+            to="/login"
+            className="block w-full bg-black border border-white text-white font-medium rounded-full px-6 py-3"
           >
             Login
-          </button>
+          </Link>
         </div>
 
         <p className="text-xs text-slate-400 mt-6">
