@@ -1,6 +1,7 @@
 // Using JSX transform; no need to import React directly
 import { Menu } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import NavLogo from '../assets/NavLogo.svg';
 
 export default function UserNavbar() {
   const [open, setOpen] = useState(false);
@@ -20,18 +21,10 @@ export default function UserNavbar() {
   return (
     <header className="w-full bg-transparent px-6 py-6">
       <div className="max-w-6xl mx-auto">
-        <div className="rounded-full border border-slate-800 px-6 py-3 flex items-center justify-between gap-4 bg-black bg-opacity-40 backdrop-blur-sm">
+        <div className="rounded-full border border-slate-800 px-6 py-3 flex items-center justify-between gap-4 bg-transparent bg-opacity-40 backdrop-blur-sm">
         {/* Left: Logo */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-full bg-white bg-opacity-10 flex items-center justify-center">
-              <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M2 12h20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M12 2v20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-            <div className="text-white font-bold text-lg">BLACKTICKET</div>
-          </div>
+          <img src={NavLogo} alt="BLACKTICKET" className="w-auto h-auto" />
         </div>
 
         {/* Center: Nav links */}
@@ -44,7 +37,7 @@ export default function UserNavbar() {
         {/* Right: actions */}
         <div className="flex items-center gap-4">
           <button className="hidden md:inline-flex items-center gap-2 bg-white bg-opacity-10 text-white rounded-full px-3 py-1 hover:bg-opacity-20">
-            <span className="text-sm">Member</span>
+            <span className="text-sm">Guest</span>
           </button>
 
           <div className="relative" ref={toggleRef}>
