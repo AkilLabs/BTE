@@ -1,5 +1,5 @@
 // Using JSX transform; no need to import React directly
-import { Menu } from 'lucide-react';
+import { Menu, Home, Film, Info, User } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import NavLogo from '../assets/NavLogo.svg';
 
@@ -19,68 +19,74 @@ export default function UserNavbar() {
   }, []);
 
   return (
-    <header className="w-full bg-transparent px-6 py-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="rounded-full border border-slate-800 px-6 py-3 flex items-center justify-between gap-4 bg-transparent bg-opacity-40 backdrop-blur-sm">
-        {/* Left: Logo */}
-        <div className="flex items-center gap-3">
-          <img src={NavLogo} alt="BLACKTICKET" className="w-auto h-auto" />
-        </div>
-
-        {/* Center: Nav links */}
-        <nav className="hidden md:flex items-center gap-6 text-sm text-white opacity-90">
-          <a href="#" className="hover:underline">Home</a>
-          <a href="#" className="hover:underline">Movies</a>
-          <a href="#" className="hover:underline">About Us</a>
-        </nav>
-
-        {/* Right: actions */}
-        <div className="flex items-center gap-4">
-          <button className="hidden md:inline-flex items-center gap-2 bg-white bg-opacity-10 text-white rounded-full px-3 py-1 hover:bg-opacity-20">
-            <span className="text-sm">Guest</span>
-          </button>
-
-          <div className="relative" ref={toggleRef}>
-            <button
-              aria-haspopup="true"
-              aria-expanded={open}
-              onClick={() => setOpen((s) => !s)}
-              className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-white"
-            >
-              <span className="sr-only">Login</span>
-              {/* simple avatar circle */}
-              <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 12a4 4 0 100-8 4 4 0 000 8z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 20a8 8 0 0116 0" />
-              </svg>
-            </button>
-
-            {/* Dropdown */}
-            {open && (
-              <div className="absolute right-0 mt-2 w-36 rounded-md bg-slate-900 text-white border border-slate-700 shadow-md z-20">
-                <ul className="py-1 text-sm">
-                  <li>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setOpen(false);
-                        // Navigate to /login (simple navigation since no router is installed)
-                        window.location.pathname = '/auth';
-                      }}
-                      className="w-full text-left px-4 py-2 hover:bg-slate-800"
-                    >
-                      Login
-                    </button>
-                  </li>
-                </ul>
-              </div>
-            )}
+    <header className="hidden md:block fixed top-0 left-0 right-0 w-full z-40 px-4 md:px-6 py-4">
+      <div className="max-w-7xl mx-auto">
+        {/* Glassmorphism navbar */}
+        <div className="rounded-full border border-white/15 px-8 py-5 flex items-center justify-center gap-16 bg-white/8 backdrop-blur-sm shadow-lg">
+          {/* Left: Logo */}
+          <div className="absolute left-8 flex items-center gap-3">
+            <img src={NavLogo} alt="BLACKTICKET" className="h-12 w-auto" />
           </div>
 
-          <button className="md:hidden inline-flex items-center justify-center p-2 rounded-full bg-white bg-opacity-10 text-white">
-            <Menu size={18} />
-          </button>
-        </div>
+          {/* Center: Nav links */}
+          <nav className="flex items-center gap-10 text-sm md:text-base text-white/80">
+            <a href="#" className="hover:text-white transition duration-200 font-medium">Home</a>
+            <a href="#" className="hover:text-white transition duration-200 font-medium">Movies</a>
+            <a href="#" className="hover:text-white transition duration-200 font-medium">About Us</a>
+          </nav>
+
+          {/* Right: User profile dropdown */}
+          <div className="absolute right-8 flex items-center gap-2 md:gap-3">
+            {/* Dropdown Menu */}
+            <div className="relative" ref={toggleRef}>
+              <button
+                aria-haspopup="true"
+                aria-expanded={open}
+                onClick={() => setOpen((s) => !s)}
+                className="w-10 h-10 rounded-full bg-white/8 border border-white/15 flex items-center justify-center text-white hover:bg-white/12 transition duration-200"
+              >
+                <span className="sr-only">User menu</span>
+                <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 12a4 4 0 100-8 4 4 0 000 8z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 20a8 8 0 0116 0" />
+                </svg>
+              </button>
+
+              {/* Dropdown */}
+              {open && (
+                <div className="absolute right-0 mt-3 w-40 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-sm text-white shadow-lg z-20">
+                  <ul className="py-2 text-sm">
+                    <li>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOpen(false);
+                          window.location.pathname = '/auth';
+                        }}
+                        className="w-full text-left px-4 py-2.5 hover:bg-white/10 transition duration-200 font-medium rounded-lg mx-2 my-1"
+                      >
+                        Login
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        type="button"
+                        onClick={() => setOpen(false)}
+                        className="w-full text-left px-4 py-2.5 hover:bg-white/10 transition duration-200 font-medium rounded-lg mx-2 my-1"
+                      >
+                        Logout
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            {/* Mobile menu button */}
+            <button className="md:hidden inline-flex items-center justify-center p-1.5 rounded-full bg-white/8 border border-white/15 text-white hover:bg-white/12 transition duration-200">
+              <Menu size={16} />
+            </button>
+          </div>
         </div>
       </div>
     </header>
