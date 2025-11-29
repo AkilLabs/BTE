@@ -1,11 +1,23 @@
 // Using JSX transform; no need to import React directly
 import { Menu } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useToast } from '../context/ToastContext';
 import NavLogo from '../assets/NavLogo.svg';
 
 export default function UserNavbar() {
   const [open, setOpen] = useState(false);
+  const [userName, setUserName] = useState<string | null>(null);
   const toggleRef = useRef<HTMLDivElement | null>(null);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+
+  // Load user name from localStorage on mount
+  useEffect(() => {
+    const name = localStorage.getItem('userName');
+    setUserName(name);
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -18,11 +30,21 @@ export default function UserNavbar() {
     return () => document.removeEventListener('click', onDocClick);
   }, []);
 
+  const isActive = (path: string) => {
+    if (path === '/') {
+      return location.pathname === '/' || location.pathname === '/user-home';
+    }
+    return location.pathname === path;
+  };
+
   return (
     <header className="hidden md:block fixed top-0 left-0 right-0 w-full z-40 px-4 md:px-6 py-4">
       <div className="max-w-7xl mx-auto">
         {/* Glassmorphism navbar */}
-        <div className="rounded-full border border-white/15 px-8 py-5 flex items-center justify-center gap-16 bg-white/8 backdrop-blur-sm shadow-lg">
+        <div 
+          className="rounded-full border border-white/15 px-8 py-5 flex items-center justify-center gap-16 bg-white/8 shadow-lg"
+          style={{ backdropFilter: 'blur(8px)' }}
+        >
           {/* Left: Logo */}
           <div className="absolute left-8 flex items-center gap-3">
             <img src={NavLogo} alt="BLACKTICKET" className="h-12 w-auto" />
@@ -30,8 +52,28 @@ export default function UserNavbar() {
 
           {/* Center: Nav links */}
           <nav className="flex items-center gap-10 text-sm md:text-base text-white/80">
-            <a href="/" className="hover:text-white transition duration-200 font-medium">Home</a>
-            <a href="/movies" className="hover:text-white transition duration-200 font-medium">Movies</a>
+            <a 
+              href="/" 
+              className={`hover:text-white transition duration-200 font-medium relative ${
+                isActive('/') ? 'text-yellow-400' : ''
+              }`}
+            >
+              Home
+              {isActive('/') && (
+                <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
+              )}
+            </a>
+            <a 
+              href="/movies" 
+              className={`hover:text-white transition duration-200 font-medium relative ${
+                isActive('/movies') ? 'text-yellow-400' : ''
+              }`}
+            >
+              Movies
+              {isActive('/movies') && (
+                <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
+              )}
+            </a>
             <a href="#" className="hover:text-white transition duration-200 font-medium">About Us</a>
           </nav>
 
@@ -43,41 +85,71 @@ export default function UserNavbar() {
                 aria-haspopup="true"
                 aria-expanded={open}
                 onClick={() => setOpen((s) => !s)}
-                className="w-10 h-10 rounded-full bg-white/8 border border-white/15 flex items-center justify-center text-white hover:bg-white/12 transition duration-200"
+                className="flex items-center gap-2 px-3 py-2 rounded-full bg-white/8 text-white hover:bg-white/12 transition duration-200"
               >
-                <span className="sr-only">User menu</span>
-                <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 12a4 4 0 100-8 4 4 0 000 8z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 20a8 8 0 0116 0" />
-                </svg>
+                {/* User Initial Avatar */}
+                <div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center font-bold text-black text-sm">
+                  {userName ? userName.charAt(0).toUpperCase() : '?'}
+                </div>
+                {/* User Name */}
+                {userName && (
+                  <span className="text-sm font-medium hidden sm:inline">{userName.split(' ')[0]}</span>
+                )}
               </button>
 
               {/* Dropdown */}
               {open && (
-                <div className="absolute right-0 mt-3 w-40 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-sm text-white shadow-lg z-20">
-                  <ul className="py-2 text-sm">
-                    <li>
+                <div 
+                  className="absolute right-0 mt-2 w-56 rounded-xl bg-white/5 border border-white/15 text-white shadow-xl z-20"
+                  style={{ backdropFilter: 'blur(8px)' }}
+                >
+                  {userName && (
+                    <div className="px-4 py-3 border-b border-white/15">
+                      <p className="text-xs text-white/60">Logged in as</p>
+                      <p className="text-sm font-semibold text-white">{userName}</p>
+                    </div>
+                  )}
+                  <div className="py-2">
+                    {userName ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOpen(false);
+                            navigate('/profile');
+                          }}
+                          className="w-full text-left px-4 py-2.5 text-white hover:bg-white/10 transition duration-200 font-medium"
+                        >
+                          Profile
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOpen(false);
+                            document.cookie = 'jwt=; path=/; max-age=0';
+                            localStorage.clear();
+                            setUserName(null);
+                            showToast('Logged out successfully', 'success');
+                            navigate('/login');
+                          }}
+                          className="w-full text-left px-4 py-2.5 text-white hover:bg-white/10 transition duration-200 font-medium"
+                        >
+                          Logout
+                        </button>
+                      </>
+                    ) : (
                       <button
                         type="button"
                         onClick={() => {
                           setOpen(false);
-                          window.location.pathname = '/auth';
+                          navigate('/login');
                         }}
-                        className="w-full text-left px-4 py-2.5 hover:bg-white/10 transition duration-200 font-medium rounded-lg mx-2 my-1"
+                        className="w-full text-left px-4 py-2.5 text-white hover:bg-white/10 transition duration-200 font-medium"
                       >
                         Login
                       </button>
-                    </li>
-                    <li>
-                      <button
-                        type="button"
-                        onClick={() => setOpen(false)}
-                        className="w-full text-left px-4 py-2.5 hover:bg-white/10 transition duration-200 font-medium rounded-lg mx-2 my-1"
-                      >
-                        Logout
-                      </button>
-                    </li>
-                  </ul>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

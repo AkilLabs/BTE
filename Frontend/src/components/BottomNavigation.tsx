@@ -1,15 +1,34 @@
 // Using JSX transform; no need to import React directly
 import { Home, Film, Info, User } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useToast } from '../context/ToastContext';
 
 export default function BottomNavigation() {
   const [open, setOpen] = useState(false);
+  const [userName, setUserName] = useState<string | null>(null);
   const toggleRef = useRef<HTMLDivElement | null>(null);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+
+  // Load user name from localStorage on mount
+  useEffect(() => {
+    const name = localStorage.getItem('userName');
+    setUserName(name);
+  }, []);
 
   const handleClickOutside = (e: React.MouseEvent) => {
     if (toggleRef.current && !toggleRef.current.contains(e.target as Node)) {
       setOpen(false);
     }
+  };
+
+  const isActive = (path: string) => {
+    if (path === '/') {
+      return location.pathname === '/' || location.pathname === '/user-home';
+    }
+    return location.pathname === path;
   };
 
   return (
@@ -19,19 +38,33 @@ export default function BottomNavigation() {
         <div className="flex items-center justify-around px-4 py-3">
           {/* Home */}
           <a
-            href="#"
-            className="flex flex-col items-center gap-1 text-white hover:text-yellow-400 transition duration-200"
+            href="/"
+            className={`flex flex-col items-center gap-1 transition duration-200 relative ${
+              isActive('/')
+                ? 'text-yellow-400'
+                : 'text-white hover:text-yellow-400'
+            }`}
           >
-            <Home size={24} className="text-yellow-400" />
-            <span className="text-xs font-medium text-yellow-400">Home</span>
+            <Home size={24} />
+            {isActive('/') && (
+              <div className="absolute -bottom-2 w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
+            )}
+            <span className="text-xs font-medium">Home</span>
           </a>
 
           {/* Movies */}
           <a
-            href="#"
-            className="flex flex-col items-center gap-1 text-white hover:text-yellow-400 transition duration-200"
+            href="/movies"
+            className={`flex flex-col items-center gap-1 transition duration-200 relative ${
+              isActive('/movies')
+                ? 'text-yellow-400'
+                : 'text-white hover:text-yellow-400'
+            }`}
           >
             <Film size={24} />
+            {isActive('/movies') && (
+              <div className="absolute -bottom-2 w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
+            )}
             <span className="text-xs font-medium">Movies</span>
           </a>
 
@@ -57,31 +90,59 @@ export default function BottomNavigation() {
             {/* Dropdown Menu */}
             {open && (
               <div
-                className="absolute bottom-full right-0 mb-2 w-32 rounded-2xl bg-black border border-slate-700 shadow-lg z-50"
+                className="absolute bottom-full right-0 mb-2 w-40 rounded-2xl bg-black border border-slate-700 shadow-lg z-50"
                 onClick={handleClickOutside}
               >
                 <ul className="py-2 text-xs">
-                  <li>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setOpen(false);
-                        window.location.pathname = '/auth';
-                      }}
-                      className="w-full text-left px-4 py-2 text-white hover:bg-slate-800 transition duration-200 font-medium"
-                    >
-                      Login
-                    </button>
-                  </li>
-                  <li>
-                    <button
-                      type="button"
-                      onClick={() => setOpen(false)}
-                      className="w-full text-left px-4 py-2 text-white hover:bg-slate-800 transition duration-200 font-medium"
-                    >
-                      Logout
-                    </button>
-                  </li>
+                  {userName ? (
+                    <>
+                      <li className="px-4 py-2 border-b border-slate-700">
+                        <p className="text-white/60 text-xs">Logged in as</p>
+                        <p className="text-white font-semibold">{userName}</p>
+                      </li>
+                      <li>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOpen(false);
+                            navigate('/profile');
+                          }}
+                          className="w-full text-left px-4 py-2 text-white hover:bg-slate-800 transition duration-200 font-medium"
+                        >
+                          Profile
+                        </button>
+                      </li>
+                      <li>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOpen(false);
+                            document.cookie = 'jwt=; path=/; max-age=0';
+                            localStorage.clear();
+                            setUserName(null);
+                            showToast('Logged out successfully', 'success');
+                            navigate('/login');
+                          }}
+                          className="w-full text-left px-4 py-2 text-white hover:bg-slate-800 transition duration-200 font-medium"
+                        >
+                          Logout
+                        </button>
+                      </li>
+                    </>
+                  ) : (
+                    <li>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOpen(false);
+                          navigate('/login');
+                        }}
+                        className="w-full text-left px-4 py-2 text-white hover:bg-slate-800 transition duration-200 font-medium"
+                      >
+                        Login
+                      </button>
+                    </li>
+                  )}
                 </ul>
               </div>
             )}

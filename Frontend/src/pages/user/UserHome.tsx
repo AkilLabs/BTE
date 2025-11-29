@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useUser } from '../../hooks/useUser';
 import UserNavbar from '../../components/UserNavbar';
 import BottomNavigation from '../../components/BottomNavigation';
 import MovieCard from '../../components/MovieCard';
@@ -35,6 +36,7 @@ const initialMockMovies: Movie[] = [
 
 export default function UserHome() {
   const navigate = useNavigate();
+  const { user, loading, isAuthenticated } = useUser();
   const [movies, setMovies] = useState<Movie[]>([]);
   const [currentTrendingIndex, setCurrentTrendingIndex] = useState(0);
 

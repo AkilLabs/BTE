@@ -32,7 +32,7 @@ JWT_SECRET = "secret"
 JWT_ALGORITHM = "HS256"
 
 # MongoDB Configuration
-mongo_url = os.getenv("MONGO_URI")
+mongo_url = "mongodb+srv://haaka:HAAKA%40123@haaka.rd0vpfn.mongodb.net/"
 client = MongoClient(mongo_url)
 db = client["BT-Enterprise"]
 user_collection = db["users"]
@@ -132,7 +132,52 @@ def user_login(request):
     except Exception:
         # Log the exception details internally
         return JsonResponse({"error": "An unexpected error occurred. Please try again."}, status=500)
-    
+
+@csrf_exempt
+def get_user_profile(request):
+    """Returns profile for the authenticated user/admin using JWT in cookies."""
+    if request.method != "GET":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+
+    # Get JWT from cookies
+    token = request.COOKIES.get("jwt")
+    if not token:
+        return JsonResponse({"error": "Authorization cookie missing"}, status=401)
+
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        user_id = payload.get("id")
+        role = payload.get("role", "user")
+
+        if not user_id:
+            return JsonResponse({"error": "Invalid token payload"}, status=401)
+
+        collection = admin_collection if role == "admin" else user_collection
+        user = collection.find_one({"_id": ObjectId(user_id)})
+        if not user:
+            return JsonResponse({"error": "User not found"}, status=404)
+
+        profile = {
+            "id": str(user.get("_id")),
+            "name": user.get("name"),
+            "email": user.get("email"),
+            "phone_number": user.get("phone_number"),
+            "role": user.get("role", role),
+            "created_at": user.get("created_at").isoformat() if user.get("created_at") else None,
+            "last_login": user.get("last_login").isoformat() if user.get("last_login") else None,
+        }
+        # include admin-specific fields if present
+        if role == "admin":
+            profile["status"] = user.get("status")
+
+        return JsonResponse({"profile": profile}, status=200)
+
+    except jwt.ExpiredSignatureError:
+        return JsonResponse({"error": "Token has expired"}, status=401)
+    except jwt.InvalidTokenError:
+        return JsonResponse({"error": "Invalid token"}, status=401)
+    except Exception:
+        return JsonResponse({"error": "An unexpected error occurred."}, status=500)
 
 #=======================================ADMIN==========================================================================================
 
