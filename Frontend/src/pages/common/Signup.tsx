@@ -1,14 +1,24 @@
 // Using JSX transform; no need to import React directly
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useToast } from '../../context/ToastContext';
 import BTlogo from '../../assets/BTlogo.png';
 import { User, Mail, Eye, EyeOff, Lock, Phone, X, } from 'lucide-react';
 
 export default function Signup() {
+  const navigate = useNavigate();
+  const { showToast } = useToast();
   const [showPass, setShowPass] = useState(false);
   const [showConfirmPass, setShowConfirmPass] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  
+  // Form fields
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [countryCode, setCountryCode] = useState('+91');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [focusedField, setFocusedField] = useState<string | null>(null);
@@ -36,6 +46,67 @@ export default function Signup() {
     return 'Weak';
   };
 
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validation checks
+    if (!name || !email || !phoneNumber || !password || !confirmPassword) {
+      showToast('All fields are required', 'warning');
+      return;
+    }
+
+    if (!termsAccepted) {
+      showToast('Please accept the Terms of Service and Privacy Policy', 'warning');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      showToast('Passwords do not match', 'warning');
+      return;
+    }
+
+    if (!hasMinLength || !hasNumber || !hasSymbol || !hasUpperCase || !hasLowerCase) {
+      showToast('Password does not meet the strength requirements', 'warning');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch('http://localhost:8000/api/user_signup/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          phone_number: `${countryCode}${phoneNumber}`,
+          password,
+          confirm_password: confirmPassword,
+        }),
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const errorMessage = data.error || data.message || 'Signup failed. Please try again.';
+        showToast(errorMessage, 'error');
+        return;
+      }
+
+      showToast('Account created successfully! Redirecting to login...', 'success');
+      // Navigate to login on successful signup
+      setTimeout(() => navigate('/login'), 500);
+    } catch (err) {
+      showToast('An error occurred. Please try again later.', 'error');
+      console.error('Signup error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-black px-4">
       <div className="w-full max-w-6xl">
@@ -50,15 +121,17 @@ export default function Signup() {
             <h3 className="text-white text-xl md:text-2xl font-bold mb-2 md:mb-3 leading-tight">Create an account & Book your tickets!</h3>
             <p className="text-slate-400 text-xs md:text-sm mb-6 md:mb-8">Join us to unlock exclusive movie deals and manage your bookings effortlessly.</p>
 
-            <div className="space-y-4">
+            <form onSubmit={handleSignup} className="space-y-4">
               <div className="flex items-center gap-3 border-b border-slate-700 py-2">
                 <User className="w-5 h-5 text-slate-400 flex-shrink-0" />
                 <input
                   className="flex-1 bg-transparent text-white placeholder-slate-500 outline-none text-sm"
                   placeholder="Harlee"
-                  defaultValue=""
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   name="name"
                   aria-label="name"
+                  required
                 />
               </div>
 
@@ -67,10 +140,12 @@ export default function Signup() {
                 <input
                   className="flex-1 bg-transparent text-white placeholder-slate-500 outline-none text-sm"
                   placeholder="harlee@gmail.com"
-                  defaultValue=""
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   name="email"
                   type="email"
                   aria-label="email"
+                  required
                 />
               </div>
 
@@ -194,8 +269,9 @@ export default function Signup() {
                 <div className="flex gap-2 w-full items-center">
                   <select
                     className="bg-transparent text-white border-none outline-none flex-shrink-0 text-sm cursor-pointer hover:text-yellow-400 transition appearance-none"
+                    value={countryCode}
+                    onChange={(e) => setCountryCode(e.target.value)}
                     aria-label="country-code"
-                    defaultValue="+91"
                   >
                     <option value="+91" className="bg-slate-900 text-white">+91</option>
                     <option value="+1" className="bg-slate-900 text-white">+1</option>
@@ -204,9 +280,11 @@ export default function Signup() {
                   <input
                     className="flex-1 bg-transparent text-white placeholder-slate-500 outline-none text-sm"
                     placeholder="9876453210"
-                    defaultValue=""
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
                     name="phone"
                     aria-label="phone"
+                    required
                   />
                 </div>
               </div>
@@ -225,8 +303,12 @@ export default function Signup() {
                 </label>
               </div>
 
-              <button className="w-full bg-[#FBBB00] text-black font-bold rounded-full px-6 py-2.5 shadow-md mt-4 text-sm md:text-base hover:bg-yellow-500 transition" type="button">
-                Agree and Register
+              <button 
+                className="w-full bg-[#FBBB00] text-black font-bold rounded-full px-6 py-2.5 shadow-md mt-4 text-sm md:text-base hover:bg-yellow-500 transition disabled:opacity-50 disabled:cursor-not-allowed" 
+                type="submit"
+                disabled={loading}
+              >
+                {loading ? 'Registering...' : 'Agree and Register'}
               </button>
 
               <div className="flex items-center gap-4 my-4 text-slate-500">
@@ -250,7 +332,7 @@ export default function Signup() {
                 </Link>
                 !
               </p>
-            </div>
+            </form>
           </div>
 
           {/* Right: big logo on desktop */}
