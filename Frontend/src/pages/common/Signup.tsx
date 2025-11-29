@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import BTlogo from '../../assets/BTlogo.png';
-import { User, Mail, Eye, EyeOff, Lock, Phone, X, Check } from 'lucide-react';
+import { User, Mail, Eye, EyeOff, Lock, Phone, X, } from 'lucide-react';
 
 export default function Signup() {
   const [showPass, setShowPass] = useState(false);
@@ -21,7 +21,6 @@ export default function Signup() {
   const hasLowerCase = /[a-z]/.test(password);
 
   const passwordsMatch = password === confirmPassword && password.length > 0;
-  const isPasswordStrong = hasMinLength && hasNumber && hasSymbol;
 
   const getStrengthColor = () => {
     if (!password) return 'bg-slate-700';

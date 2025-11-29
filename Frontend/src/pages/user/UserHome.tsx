@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import UserNavbar from '../../components/UserNavbar';
+import BottomNavigation from '../../components/BottomNavigation';
 import MovieCard from '../../components/MovieCard';
 
 const mockTrendingImage = 'https://picsum.photos/1200/420?random=1';
@@ -28,7 +29,7 @@ export default function UserHome() {
       <div className="max-w-6xl mx-auto">
         <UserNavbar />
 
-        <main className="px-6 py-8">
+        <main className="px-6 py-8 pb-24 md:pb-8 md:pt-16">
           {/* Trending */}
           <section>
             <div className="flex items-center justify-between mb-4">
@@ -70,6 +71,7 @@ export default function UserHome() {
           </section>
         </main>
       </div>
+      <BottomNavigation />
     </div>
   );
 }
