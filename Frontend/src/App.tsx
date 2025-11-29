@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import UserHome from './pages/user/UserHome';
+import Movies from './pages/user/Movies';
 import Auth from './pages/common/Auth';
 import Signup from './pages/common/Signup';
 import Login from './pages/common/Login';
@@ -13,6 +14,7 @@ function App() {
       <div className="min-h-screen">
         <Routes>
           <Route path="/" element={<UserHome />} />
+          <Route path="/movies" element={<Movies />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />

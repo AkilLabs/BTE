@@ -1,5 +1,5 @@
 // Using JSX transform; no need to import React directly
-import { Menu, Home, Film, Info, User } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import NavLogo from '../assets/NavLogo.svg';
 
@@ -30,8 +30,8 @@ export default function UserNavbar() {
 
           {/* Center: Nav links */}
           <nav className="flex items-center gap-10 text-sm md:text-base text-white/80">
-            <a href="#" className="hover:text-white transition duration-200 font-medium">Home</a>
-            <a href="#" className="hover:text-white transition duration-200 font-medium">Movies</a>
+            <a href="/" className="hover:text-white transition duration-200 font-medium">Home</a>
+            <a href="/movies" className="hover:text-white transition duration-200 font-medium">Movies</a>
             <a href="#" className="hover:text-white transition duration-200 font-medium">About Us</a>
           </nav>
 

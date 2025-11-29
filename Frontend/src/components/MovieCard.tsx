@@ -7,14 +7,22 @@ interface MovieCardProps {
 
 export default function MovieCard({ title, image }: MovieCardProps) {
   return (
-    <div className="w-52 md:w-64 flex-shrink-0">
-      <div className="relative rounded-xl overflow-hidden border border-slate-700 bg-black shadow-md">
-        <img src={image} alt={title} className="w-full h-80 object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent opacity-60" />
-      </div>
-      <div className="mt-2 flex items-center justify-between">
-        <div className="text-sm text-white font-semibold">{title}</div>
-        <button aria-label={`Book ${title}`} className="text-sm font-semibold bg-yellow-400 text-black px-3 py-1 rounded-full shadow hover:scale-105 transition">Book Now</button>
+    <div className="flex justify-center">
+      <div className="relative w-full h-64 rounded-2xl border border-slate-700 bg-black shadow-lg group cursor-pointer">
+        <div className="overflow-hidden rounded-2xl w-full h-full">
+          <img src={image} alt={title} className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-80" />
+        </div>
+        
+        {/* Book Now Button - Positioned at bottom center */}
+        <div className="absolute bottom-[-1rem] left-0 right-0 flex justify-center">
+          <button 
+            aria-label={`Book ${title}`} 
+            className="bg-yellow-400 text-black font-bold px-6 py-2 rounded-full hover:bg-yellow-500 transition-colors shadow-lg"
+          >
+            Book Now
+          </button>
+        </div>
       </div>
     </div>
   );
