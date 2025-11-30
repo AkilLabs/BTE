@@ -88,9 +88,9 @@ export default function UserNavbar() {
           </nav>
 
           {/* Right: User profile dropdown */}
-          <div className="absolute right-8 flex items-center gap-2 md:gap-3">
+          <div className="absolute right-8 flex items-center gap-2 md:gap-3 bg-white/8" style={{ backdropFilter: 'blur(8px)' }} >
             {/* Dropdown Menu */}
-            <div className="relative" ref={toggleRef}>
+            <div className="relative bg-white/8 rounded-full" ref={toggleRef} style={{ backdropFilter: 'blur(8px)' }} >
               <button
                 aria-haspopup="true"
                 aria-expanded={open}
@@ -109,17 +109,17 @@ export default function UserNavbar() {
 
               {/* Dropdown */}
               {open && (
-                <div 
-                  className="absolute right-0 mt-2 w-56 rounded-xl bg-white/5 border border-white/15 text-white shadow-xl z-20"
-                  style={{ backdropFilter: 'blur(8px)' }}
+                <div
+                  className="absolute right-0 mt-6 w-64 rounded-2xl bg-white/5 border border-white/15 text-white shadow-lg z-20 overflow-hidden"
+                  style={{ backdropFilter: 'blur(8px)' }} 
                 >
                   {userName && (
-                    <div className="px-4 py-3 border-b border-white/15">
-                      <p className="text-xs text-white/60">Logged in as</p>
-                      <p className="text-sm font-semibold text-white">{userName}</p>
+                    <div className="px-4 py-3 border-b border-white/12 bg-white/4 flex" style={{ backdropFilter: 'blur(8px)' }} >
+                      <p className="text-xs text-white/60 mt-2">Logged in as</p>
+                      <p className="text-lg font-bold text-white pl-28">{userName}</p>
                     </div>
                   )}
-                  <div className="py-2">
+                  <div className=" bg-transparent">
                     {userName ? (
                       <>
                         <button
@@ -128,7 +128,8 @@ export default function UserNavbar() {
                             setOpen(false);
                             navigate('/profile');
                           }}
-                          className="w-full text-left px-4 py-2.5 text-white hover:bg-white/10 transition duration-200 font-medium"
+                          className="w-full text-left px-4 py-3 text-white hover:bg-white/10 transition duration-200 font-medium"
+                          style={{ backdropFilter: 'blur(8px)' }} 
                         >
                           Profile
                         </button>
@@ -142,7 +143,8 @@ export default function UserNavbar() {
                             showToast('Logged out successfully', 'success');
                             navigate('/login');
                           }}
-                          className="w-full text-left px-4 py-2.5 text-white hover:bg-white/10 transition duration-200 font-medium"
+                          className="w-full text-left px-4 py-3 text-white hover:bg-white/10 transition duration-200 font-medium"
+                          style={{ backdropFilter: 'blur(8px)' }} 
                         >
                           Logout
                         </button>
@@ -154,7 +156,7 @@ export default function UserNavbar() {
                           setOpen(false);
                           navigate('/login');
                         }}
-                        className="w-full text-left px-4 py-2.5 text-white hover:bg-white/10 transition duration-200 font-medium"
+                        className="w-full text-left px-4 py-3 text-white hover:bg-white/10 transition duration-200 font-medium"
                       >
                         Login
                       </button>

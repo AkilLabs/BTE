@@ -138,7 +138,7 @@ export default function Signup() {
               <div className="flex items-center gap-3 border-b border-slate-700 py-2">
                 <Mail className="w-5 h-5 text-slate-400 flex-shrink-0" />
                 <input
-                  className="flex-1 bg-transparent text-white placeholder-slate-500 outline-none text-sm"
+                  className="flex-1 bg-transparent text-white placeholder-slate-500 outline-none text-sm disabled:opacity-50"
                   placeholder="harlee@gmail.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -149,6 +149,7 @@ export default function Signup() {
                 />
               </div>
 
+              {/* Password field */}
               <div className="flex items-center gap-3 border-b border-slate-700 py-2">
                 <Lock className="w-5 h-5 text-slate-400 flex-shrink-0" />
                 <input
@@ -225,44 +226,44 @@ export default function Signup() {
                 </div>
               )}
 
-              {/* Confirm Password Field */}
-              <div className="flex items-center gap-3 border-b border-slate-700 py-2">
-                <Lock className="w-5 h-5 text-slate-400 flex-shrink-0" />
-                <input
-                  className="flex-1 bg-transparent text-white placeholder-slate-500 outline-none text-sm"
-                  placeholder="Confirm Password"
-                  name="confirmPassword"
-                  type={showConfirmPass ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  aria-label="confirm password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPass((s) => !s)}
-                  className="text-slate-400 flex-shrink-0"
-                  aria-label={showConfirmPass ? 'Hide password' : 'Show password'}
-                >
-                  {showConfirmPass ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
+                  {/* Confirm Password Field */}
+                  <div className="flex items-center gap-3 border-b border-slate-700 py-2">
+                    <Lock className="w-5 h-5 text-slate-400 flex-shrink-0" />
+                    <input
+                      className="flex-1 bg-transparent text-white placeholder-slate-500 outline-none text-sm"
+                      placeholder="Confirm Password"
+                      name="confirmPassword"
+                      type={showConfirmPass ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      aria-label="confirm password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPass((s) => !s)}
+                      className="text-slate-400 flex-shrink-0"
+                      aria-label={showConfirmPass ? 'Hide password' : 'Show password'}
+                    >
+                      {showConfirmPass ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
 
-              {/* Password Match Indicator */}
-              {confirmPassword && (
-                <div className="flex items-center gap-2 text-xs">
-                  {passwordsMatch ? (
-                    <>
-                      <span className="text-green-500">✓</span>
-                      <span className="text-green-500">Passwords match</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-red-500">✕</span>
-                      <span className="text-red-500">Passwords do not match</span>
-                    </>
+                  {/* Password Match Indicator */}
+                  {confirmPassword && (
+                    <div className="flex items-center gap-2 text-xs">
+                      {passwordsMatch ? (
+                        <>
+                          <span className="text-green-500">✓</span>
+                          <span className="text-green-500">Passwords match</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-red-500">✕</span>
+                          <span className="text-red-500">Passwords do not match</span>
+                        </>
+                      )}
+                    </div>
                   )}
-                </div>
-              )}
 
               <div className="flex items-center gap-3 border-b border-slate-700 py-2">
                 <Phone className="w-5 h-5 text-slate-400 flex-shrink-0" />
@@ -313,14 +314,9 @@ export default function Signup() {
 
               <div className="flex items-center gap-4 my-4 text-slate-500">
                 <span className="flex-1 border-t border-slate-700" />
-                <span className="text-xs font-medium">Or Login with</span>
+                <span className="text-xs font-medium">Have an account?</span>
                 <span className="flex-1 border-t border-slate-700" />
               </div>
-
-              <button className="w-full bg-slate-800 text-white font-medium rounded-full px-4 py-2 flex items-center justify-center gap-2 hover:bg-slate-700 transition text-xs">
-                <div className="w-4 h-4 rounded-full bg-white text-black flex items-center justify-center text-xs font-bold">G</div>
-                <span>Google</span>
-              </button>
 
               <p className="text-xs text-slate-500 mt-6 text-center md:text-left leading-relaxed">
                 Do have an account?{' '}

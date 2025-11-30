@@ -8,7 +8,7 @@ export default function AboutUs() {
       <div className="max-w-6xl mx-auto">
         <UserNavbar />
 
-        <main className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 pb-28 sm:pb-24 md:pb-8 md:pt-32">
+        <main className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 pb-8 sm:pb-24 md:pb-8 md:pt-32">
           {/* Page Title */}
           <div className="mb-10 sm:mb-12 md:mb-16">
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4">About BlackTicket Entertainments</h1>
