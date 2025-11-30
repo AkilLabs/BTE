@@ -73,7 +73,7 @@ export default function UserHome() {
       <div className="max-w-6xl mx-auto">
         <UserNavbar />
 
-        <main className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 pb-28 sm:pb-24 md:pb-8 md:pt-32">
+        <main className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 pb-8 sm:pb-24 md:pb-8 md:pt-32">
           {/* Trending Carousel */}
           <section>
             <div className="flex items-center justify-between mb-4">

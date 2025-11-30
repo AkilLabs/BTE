@@ -61,7 +61,7 @@ export default function Movies() {
       <div className="max-w-7xl mx-auto">
         <UserNavbar />
 
-        <main className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 pb-28 sm:pb-24 md:pb-8 md:pt-32">
+        <main className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 pb-8 sm:pb-24 md:pb-8 md:pt-32">
           {/* Page Title */}
           <div className="mb-4 sm:mb-6 md:mb-8">
             <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-1 sm:mb-2">All Movies</h1>
