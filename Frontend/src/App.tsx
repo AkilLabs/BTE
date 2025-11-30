@@ -9,6 +9,7 @@ import Login from './pages/common/Login';
 import ForgotPassword from './pages/common/ForgotPassword';
 import OtpVerification from './pages/common/OtpVerification';
 import NewPassword from './pages/common/NewPassword';
+import AboutUs from './pages/user/AboutUs';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/otp-verification" element={<OtpVerification />} />
             <Route path="/new-password" element={<NewPassword />} />
+            <Route path="/about-us" element={<AboutUs />} />
           </Routes>
           <ToastContainer />
         </div>

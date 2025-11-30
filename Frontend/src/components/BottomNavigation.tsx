@@ -70,10 +70,17 @@ export default function BottomNavigation() {
 
           {/* About Us */}
           <a
-            href="#"
-            className="flex flex-col items-center gap-1 text-white hover:text-yellow-400 transition duration-200"
+            href="/about-us"
+            className={`flex flex-col items-center gap-1 transition duration-200 relative ${
+              isActive('/about-us')
+                ? 'text-yellow-400'
+                : 'text-white hover:text-yellow-400'
+            }`}
           >
             <Info size={24} />
+            {isActive('/about-us') && (
+              <div className="absolute -bottom-2 w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
+            )}
             <span className="text-xs font-medium">About Us</span>
           </a>
 

@@ -74,7 +74,17 @@ export default function UserNavbar() {
                 <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
               )}
             </a>
-            <a href="#" className="hover:text-white transition duration-200 font-medium">About Us</a>
+            <a 
+              href="/about-us" 
+              className={`hover:text-white transition duration-200 font-medium relative ${
+                isActive('/about-us') ? 'text-yellow-400' : ''
+              }`}
+            >
+              About Us
+              {isActive('/about-us') && (
+                <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
+              )}
+            </a>
           </nav>
 
           {/* Right: User profile dropdown */}
