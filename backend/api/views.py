@@ -62,6 +62,58 @@ def update_user_last_login(email):
     user_collection.update_one({"email": email}, {"$set": {"last_login": datetime.now()}})
 
 
+# === OTP & Email Functions ===
+def generate_otp():
+    """Generate a random 6-digit OTP."""
+    return str(random.randint(100000, 999999))
+
+
+def send_otp_email(email, otp, user_name):
+    """Send OTP via email to the user."""
+    try:
+        subject = "Password Reset OTP - BlackTicket"
+        html_message = f"""
+        <html>
+            <body style="font-family: Arial, sans-serif; background-color: #1a1a1a; color: #fff; padding: 20px;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: #222; padding: 30px; border-radius: 10px; border-left: 5px solid #FBBB00;">
+                    <h2 style="color: #FBBB00; margin-bottom: 20px;">BlackTicket Password Reset</h2>
+                    <p style="font-size: 16px; margin-bottom: 10px;">Hi <strong>{user_name}</strong>,</p>
+                    <p style="font-size: 14px; color: #ccc; margin-bottom: 20px;">
+                        We received a request to reset your password. Use the OTP below to proceed with resetting your password.
+                    </p>
+                    <div style="background-color: #333; padding: 20px; border-radius: 8px; text-align: center; margin: 30px 0;">
+                        <p style="font-size: 12px; color: #999; margin: 0 0 10px 0;">Your OTP Code:</p>
+                        <p style="font-size: 32px; font-weight: bold; color: #FBBB00; letter-spacing: 5px; margin: 0;">
+                            {otp}
+                        </p>
+                    </div>
+                    <p style="font-size: 12px; color: #999;">This OTP will expire in 10 minutes.</p>
+                    <p style="font-size: 12px; color: #999; margin-bottom: 20px;">
+                        If you didn't request a password reset, please ignore this email.
+                    </p>
+                    <hr style="border: none; border-top: 1px solid #444; margin: 30px 0;">
+                    <p style="font-size: 11px; color: #666; text-align: center; margin: 0;">
+                        © 2024 BlackTicket Entertainment. All rights reserved.
+                    </p>
+                </div>
+            </body>
+        </html>
+        """
+        
+        email_msg = EmailMessage(
+            subject=subject,
+            body=html_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[email],
+        )
+        email_msg.content_subtype = "html"
+        email_msg.send(fail_silently=False)
+        return True
+    except Exception as e:
+        print(f"Email sending failed: {str(e)}")
+        return False
+
+
 # === Validators ===
 NAME_RE = re.compile(r"^[A-Za-z.\-\s]{2,}$")     # letters, spaces, dot, hyphen
 PHONE_RE = re.compile(r"^\d{7,15}$")             # digits only, 7–15
@@ -269,4 +321,192 @@ def admin_login(request):
 
     except Exception:
         # Log exception details internally
+        return JsonResponse({"error": "An unexpected error occurred."}, status=500)
+
+
+#================================ PASSWORD RESET ==========================================================================================
+
+@csrf_exempt
+def forgot_password(request):
+    """
+    Initiates forgot password flow.
+    
+    Expects JSON payload with 'email'.
+    Generates OTP, stores it in the database, and sends via email.
+    """
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+
+    try:
+        data = json.loads(request.body or "{}")
+        email = data.get("email", "").strip()
+
+        if not email:
+            return JsonResponse({"error": "Email is required"}, status=400)
+
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+            return JsonResponse({"error": "Invalid email format"}, status=400)
+
+        # Check if user exists (both regular users and admins)
+        user = user_collection.find_one({"email": email})
+        if not user:
+            user = admin_collection.find_one({"email": email})
+        
+        if not user:
+            # Don't reveal if email exists for security reasons
+            return JsonResponse({"message": "If email exists, OTP will be sent shortly"}, status=200)
+
+        # Generate OTP and expiry time (10 minutes)
+        otp = generate_otp()
+        otp_expiry = datetime.now() + timedelta(minutes=10)
+
+        # Update user with OTP and expiry
+        collection = admin_collection if user.get("role") == "admin" else user_collection
+        collection.update_one(
+            {"email": email},
+            {"$set": {
+                "otp": otp,
+                "otp_expiry": otp_expiry,
+                "otp_attempts": 0
+            }}
+        )
+
+        # Send OTP via email
+        user_name = user.get("name", "User")
+        if send_otp_email(email, otp, user_name):
+            return JsonResponse({
+                "message": "OTP sent successfully",
+                "email": email
+            }, status=200)
+        else:
+            return JsonResponse({"error": "Failed to send OTP. Please try again."}, status=500)
+
+    except Exception as e:
+        print(f"Forgot password error: {str(e)}")
+        return JsonResponse({"error": "An unexpected error occurred."}, status=500)
+
+
+@csrf_exempt
+def verify_otp(request):
+    """
+    Verifies the OTP provided by the user.
+    
+    Expects JSON payload with 'email' and 'otp'.
+    Returns success if OTP is valid and not expired.
+    """
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+
+    try:
+        data = json.loads(request.body or "{}")
+        email = data.get("email", "").strip()
+        otp = data.get("otp", "").strip()
+
+        if not email or not otp:
+            return JsonResponse({"error": "Email and OTP are required"}, status=400)
+
+        # Find user
+        user = user_collection.find_one({"email": email})
+        if not user:
+            user = admin_collection.find_one({"email": email})
+
+        if not user:
+            return JsonResponse({"error": "User not found"}, status=404)
+
+        # Check if OTP exists and is not expired
+        stored_otp = user.get("otp")
+        otp_expiry = user.get("otp_expiry")
+
+        if not stored_otp:
+            return JsonResponse({"error": "OTP not requested. Please use forgot password."}, status=400)
+
+        if datetime.now() > otp_expiry:
+            return JsonResponse({"error": "OTP has expired. Please request a new OTP."}, status=400)
+
+        if stored_otp != otp:
+            # Increment attempts
+            collection = admin_collection if user.get("role") == "admin" else user_collection
+            attempts = user.get("otp_attempts", 0) + 1
+            collection.update_one(
+                {"email": email},
+                {"$set": {"otp_attempts": attempts}}
+            )
+            
+            if attempts >= 3:
+                # Clear OTP after 3 failed attempts
+                collection.update_one(
+                    {"email": email},
+                    {"$unset": {"otp": "", "otp_expiry": "", "otp_attempts": ""}}
+                )
+                return JsonResponse({"error": "Too many failed attempts. Please request a new OTP."}, status=400)
+            
+            return JsonResponse({"error": f"Invalid OTP. Attempts remaining: {3 - attempts}"}, status=400)
+
+        # OTP is valid - clear OTP fields and allow password reset
+        collection = admin_collection if user.get("role") == "admin" else user_collection
+        collection.update_one(
+            {"email": email},
+            {"$unset": {"otp": "", "otp_expiry": "", "otp_attempts": ""}}
+        )
+
+        return JsonResponse({
+            "message": "OTP verified successfully",
+            "email": email
+        }, status=200)
+
+    except Exception as e:
+        print(f"OTP verification error: {str(e)}")
+        return JsonResponse({"error": "An unexpected error occurred."}, status=500)
+
+
+@csrf_exempt
+def reset_password(request):
+    """
+    Resets user password after OTP verification.
+    
+    Expects JSON payload with 'email', 'password', and 'confirm_password'.
+    Password must have been validated on frontend before sending.
+    """
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+
+    try:
+        data = json.loads(request.body or "{}")
+        email = data.get("email", "").strip()
+        password = data.get("password", "")
+        confirm_password = data.get("confirm_password", "")
+
+        if not email or not password or not confirm_password:
+            return JsonResponse({"error": "Email and passwords are required"}, status=400)
+
+        if password != confirm_password:
+            return JsonResponse({"error": "Passwords do not match"}, status=400)
+
+        # Find user
+        user = user_collection.find_one({"email": email})
+        is_admin = False
+        if not user:
+            user = admin_collection.find_one({"email": email})
+            is_admin = True
+
+        if not user:
+            return JsonResponse({"error": "User not found"}, status=404)
+
+        # Hash the new password
+        hashed_password = make_password(password)
+
+        # Update password
+        collection = admin_collection if is_admin else user_collection
+        collection.update_one(
+            {"email": email},
+            {"$set": {"password": hashed_password}}
+        )
+
+        return JsonResponse({
+            "message": "Password reset successfully",
+            "email": email
+        }, status=200)
+
+    except Exception as e:
+        print(f"Reset password error: {str(e)}")
         return JsonResponse({"error": "An unexpected error occurred."}, status=500)

@@ -11,4 +11,9 @@ urlpatterns = [
     #Admin
     path("admin_signup/", admin_signup, name="admin_signup"),
     path("admin_login/",admin_login, name="admin_login"),
+
+    # Password Reset
+    path("forgot-password/", forgot_password, name="forgot_password"),
+    path("verify-otp/", verify_otp, name="verify_otp"),
+    path("reset-password/", reset_password, name="reset_password"),
 ]
