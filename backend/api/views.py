@@ -155,9 +155,11 @@ def user_signup(request):
 @csrf_exempt
 def user_login(request):
     """
-    Authenticates a user.
+    Combined login endpoint for both users and admins.
+    
     Expects JSON payload with 'email' and 'password'.
-    Returns a JWT token on successful authentication.
+    Returns a JWT token with role included on successful authentication.
+    Automatically detects whether account is user or admin.
     """
     if request.method != "POST":
         return JsonResponse({"error": "Method not allowed"}, status=405)
@@ -170,19 +172,38 @@ def user_login(request):
         if not email or not password:
             return JsonResponse({"error": "Email and password are required"}, status=400)
 
+        # Try to find user first
         user = user_collection.find_one({"email": email})
-        if not user:
-            return JsonResponse({"error": "Email not found"}, status=404)
+        
+        if user:
+            # User account found
+            if check_password(password, user["password"]):
+                user_collection.update_one({"email": email}, {"$set": {"last_login": datetime.now()}})
+                tokens = generate_tokens(user["_id"], user.get("name", ""), "user")
+                return JsonResponse({"message": "Login successful", "token": tokens}, status=200)
+            else:
+                return JsonResponse({"error": "Invalid password"}, status=401)
+        
+        # If no user found, try admin
+        admin = admin_collection.find_one({"email": email})
+        
+        if admin:
+            # Admin account found
+            if admin.get("status") == "Inactive":
+                return JsonResponse({"error": "Account is inactive. Contact superadmin."}, status=403)
+            
+            if check_password(password, admin["password"]):
+                admin_collection.update_one({"email": email}, {"$set": {"last_login": datetime.now()}})
+                tokens = generate_tokens(admin["_id"], admin.get("name", ""), "admin")
+                return JsonResponse({"message": "Login successful", "token": tokens}, status=200)
+            else:
+                return JsonResponse({"error": "Invalid password"}, status=401)
+        
+        # Email not found in either collection
+        return JsonResponse({"error": "Email not found"}, status=404)
 
-        if check_password(password, user["password"]):
-            user_collection.update_one({"email": email}, {"$set": {"last_login": datetime.now()}})
-            tokens = generate_tokens(user["_id"], user.get("name", ""), "user")
-            return JsonResponse({"message": "Login successful", "token": tokens}, status=200)
-        else:
-            return JsonResponse({"error": "Invalid password"}, status=401)
-
-    except Exception:
-        # Log the exception details internally
+    except Exception as e:
+        print(f"Login error: {str(e)}")
         return JsonResponse({"error": "An unexpected error occurred. Please try again."}, status=500)
 
 @csrf_exempt
@@ -285,44 +306,6 @@ def admin_signup(request):
     except Exception:
         # Log the exception internally for debugging purposes
         return JsonResponse({"error": "An unexpected error occurred. Please try again."}, status=500)
-
-@csrf_exempt
-def admin_login(request):
-    """
-    Authenticates an admin user.
-
-    Expects JSON payload with 'email' and 'password'.
-    Returns a JWT token on successful authentication.
-    """
-    if request.method != "POST":
-        return JsonResponse({"error": "Method not allowed"}, status=405)
-
-    try:
-        data = json.loads(request.body or "{}")
-        email = data.get("email", "").strip()
-        password = data.get("password", "")
-
-        if not email or not password:
-            return JsonResponse({"error": "Email and password are required"}, status=400)
-
-        admin = admin_collection.find_one({"email": email})
-        if not admin:
-            return JsonResponse({"error": "Email not found"}, status=404)
-
-        if admin.get("status") == "Inactive":
-            return JsonResponse({"error": "Account is inactive. Contact superadmin."}, status=403)
-
-        if check_password(password, admin["password"]):
-            admin_collection.update_one({"email": email}, {"$set": {"last_login": datetime.now()}})
-            tokens = generate_tokens(admin["_id"], admin.get("name", ""), "admin")
-            return JsonResponse({"message": "Login successful", "token": tokens}, status=200)
-        else:
-            return JsonResponse({"error": "Invalid password"}, status=401)
-
-    except Exception:
-        # Log exception details internally
-        return JsonResponse({"error": "An unexpected error occurred."}, status=500)
-
 
 #================================ PASSWORD RESET ==========================================================================================
 
@@ -509,4 +492,99 @@ def reset_password(request):
 
     except Exception as e:
         print(f"Reset password error: {str(e)}")
+        return JsonResponse({"error": "An unexpected error occurred."}, status=500)
+
+
+# ======================= GOOGLE OAUTH =======================
+@csrf_exempt
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def google_auth(request):
+    """
+    Google OAuth authentication endpoint.
+    
+    Expects JSON payload with 'token' (Google ID token).
+    Logic:
+    - If user exists: Log them in and return JWT
+    - If user doesn't exist: Auto-create account with Google data and log them in
+    - Only users can use Google auth (admins must use regular login)
+    """
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+
+    try:
+        data = json.loads(request.body or "{}")
+        google_token = data.get("token", "")
+
+        if not google_token:
+            return JsonResponse({"error": "Google token is required"}, status=400)
+
+        # Verify Google token
+        url = f"https://oauth2.googleapis.com/tokeninfo?id_token={google_token}"
+        response = requests.get(url)
+        
+        if response.status_code != 200:
+            return JsonResponse({"error": "Invalid Google token"}, status=401)
+
+        google_data = response.json()
+        email = google_data.get("email", "")
+        name = google_data.get("name", "")
+        google_id = google_data.get("sub", "")
+
+        if not email:
+            return JsonResponse({"error": "Email not found in Google account"}, status=400)
+
+        # Check if user already exists
+        user = user_collection.find_one({"email": email})
+        
+        if user:
+            # User exists - log them in
+            # Update google_id if not already set
+            if "google_id" not in user:
+                user_collection.update_one({"email": email}, {"$set": {"google_id": google_id, "last_login": datetime.now()}})
+            else:
+                user_collection.update_one({"email": email}, {"$set": {"last_login": datetime.now()}})
+            
+            tokens = generate_tokens(user["_id"], user.get("name", ""), "user")
+            return JsonResponse({
+                "message": "Login successful",
+                "token": tokens,
+                "account_status": "exists"
+            }, status=200)
+        else:
+            # User doesn't exist - auto-create account with Google data
+            user_data = {
+                "name": name,
+                "email": email,
+                "google_id": google_id,
+                "phone_number": "",  # Optional, can be added later
+                "password": "",  # No password for Google auth
+                "is_google_auth": True,
+                "created_at": datetime.now(),
+                "last_login": datetime.now(),
+                "status": "Active"
+            }
+
+            result = user_collection.insert_one(user_data)
+            user_id = result.inserted_id
+
+            # Generate JWT tokens
+            tokens = generate_tokens(user_id, name, "user")
+
+            return JsonResponse({
+                "message": "Account created and login successful",
+                "token": tokens,
+                "account_status": "created",
+                "user": {
+                    "id": str(user_id),
+                    "name": name,
+                    "email": email
+                }
+            }, status=201)
+
+    except requests.exceptions.RequestException as e:
+        print(f"Google verification error: {str(e)}")
+        return JsonResponse({"error": "Failed to verify Google token"}, status=500)
+    except Exception as e:
+        print(f"Google auth error: {str(e)}")
         return JsonResponse({"error": "An unexpected error occurred."}, status=500)
