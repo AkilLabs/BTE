@@ -18,4 +18,8 @@ urlpatterns = [
 
     # Google OAuth
     path("google-auth/", google_auth, name="google_auth"),
+
+    # Movie Management
+    path("add-movie/", add_movie, name="add_movie"),
+    path("test-minio/", test_minio_connection, name="test_minio"),
 ]
