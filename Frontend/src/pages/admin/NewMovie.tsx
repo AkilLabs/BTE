@@ -262,7 +262,7 @@ export default function NewMovie() {
         return;
       }
 
-      const response = await fetch('http://localhost:8000/api/add-movie/', {
+      const response = await fetch('http://68.183.80.191:8000/api/add-movie/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

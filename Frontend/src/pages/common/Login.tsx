@@ -31,7 +31,7 @@ export default function Login() {
     setLoading(true);
     try {
       const token = credentialResponse.credential;
-      const apiResponse = await fetch('http://localhost:8000/api/google-auth/', {
+      const apiResponse = await fetch('http://68.183.80.191:8000/api/google-auth/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -74,7 +74,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/api/user_login/', {
+      const response = await fetch('http://68.183.80.191:8000/api/user_login/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
