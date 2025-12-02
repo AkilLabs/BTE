@@ -375,6 +375,8 @@ export default function NewMovie() {
   const bannerViewportRef = useRef<HTMLDivElement | null>(null);
   const skipNextPersist = useRef(false);
 
+  const VITE_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
   useEffect(() => {
     const storedState = loadStoredState();
     if (!storedState) {
@@ -733,7 +735,7 @@ export default function NewMovie() {
         return;
       }
 
-      const response = await fetch('http://localhost:8000/api/add-movie/', {
+      const response = await fetch(`${VITE_API_URL}/api/add-movie/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1199,7 +1201,7 @@ export default function NewMovie() {
             <div className="p-6 space-y-6">
               <div
                 className="relative mx-auto w-full"
-                style={{ width: 'min(80vw, 320px)', aspectRatio: '3 / 4' }}
+                style={{ width: 'min(100%, 320px)', aspectRatio: '3 / 4' }}
               >
                 <div
                   ref={posterViewportRef}
@@ -1292,7 +1294,7 @@ export default function NewMovie() {
             <div className="p-6 space-y-6">
               <div
                 className="relative mx-auto w-full"
-                style={{ width: 'min(90vw, 560px)', aspectRatio: '16 / 9' }}
+                style={{ width: 'min(100%, 560px)', aspectRatio: '16 / 9' }}
               >
                 <div
                   ref={bannerViewportRef}
