@@ -1,27 +1,47 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { ToastProvider } from './context/ToastContext';
+import { ToastContainer } from './components/ToastContainer';
 import UserHome from './pages/user/UserHome';
+import Movies from './pages/user/Movies';
 import Auth from './pages/common/Auth';
 import Signup from './pages/common/Signup';
 import Login from './pages/common/Login';
 import ForgotPassword from './pages/common/ForgotPassword';
 import OtpVerification from './pages/common/OtpVerification';
 import NewPassword from './pages/common/NewPassword';
+import AboutUs from './pages/user/AboutUs';
+import AdminDashboard from './pages/admin/Dashboard';
+import NewMovie from './pages/admin/NewMovie';
+import TicketManagement from './pages/admin/TicketManagement';
+import AdminProfile from './pages/admin/AdminProfile';
 
 function App() {
   return (
-    <BrowserRouter>
-      <div className="min-h-screen">
-        <Routes>
-          <Route path="/" element={<UserHome />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/otp-verification" element={<OtpVerification />} />
-          <Route path="/new-password" element={<NewPassword />} />
-        </Routes>
-      </div>
-    </BrowserRouter>
+    <ToastProvider>
+      <BrowserRouter>
+        <div className="min-h-screen">
+          <Routes>
+            <Route path="/" element={<UserHome />} />
+            <Route path="/user-home" element={<UserHome />} />
+            <Route path="/movies" element={<Movies />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/otp-verification" element={<OtpVerification />} />
+            <Route path="/new-password" element={<NewPassword />} />
+            <Route path="/about-us" element={<AboutUs />} />
+            
+            {/* Admin Routes */}
+            <Route path="/admin-dashboard" element={<AdminDashboard />} />
+            <Route path="/admin-dashboard/new-movie" element={<NewMovie />} />
+            <Route path="/admin-dashboard/ticket-management" element={<TicketManagement />} />
+            <Route path="/admin-dashboard/profile" element={<AdminProfile />} />
+          </Routes>
+          <ToastContainer />
+        </div>
+      </BrowserRouter>
+    </ToastProvider>
   );
 }
 
