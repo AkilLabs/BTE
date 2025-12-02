@@ -46,7 +46,7 @@ movie_collection = db['movies']
 MINIO_ENDPOINT = os.getenv('MINIO_ENDPOINT', 'localhost:9000')
 MINIO_ACCESS_KEY = os.getenv('MINIO_ACCESS_KEY', 'minioadmin')
 MINIO_SECRET_KEY = os.getenv('MINIO_SECRET_KEY', 'minioadmin')
-MINIO_BUCKET_NAME = os.getenv('MINIO_BUCKET_NAME', 'movie-images')
+MINIO_BUCKET_NAME = os.getenv('MINIO_BUCKET_NAME', 'blacktickets-entertainment')
 MINIO_SECURE = os.getenv('MINIO_SECURE', 'False').lower() == 'true'
 
 # Initialize MinIO client
@@ -631,25 +631,38 @@ def google_auth(request):
 
 # ======================= MOVIE MANAGEMENT =======================
 
-def upload_image_to_minio(image_file):
+def upload_image_to_minio(image_file, movie_name, image_type='poster'):
     """
     Upload image to MinIO bucket and return the URL.
     
     Args:
         image_file: Django UploadedFile object
+        movie_name: Name of the movie (used in filename)
+        image_type: Type of image ('poster' or 'banner')
     
     Returns:
         str: URL of the uploaded image or None if failed
     """
     try:
-        # Generate unique filename
-        file_extension = image_file.name.split('.')[-1]
-        unique_filename = f"{uuid.uuid4()}.{file_extension}"
+        # Sanitize movie name for filename (remove special characters, replace spaces with underscores)
+        safe_movie_name = re.sub(r'[^a-zA-Z0-9\s-]', '', movie_name)
+        safe_movie_name = re.sub(r'\s+', '_', safe_movie_name.strip())
+        
+        # Determine folder and filename based on image type
+        if image_type == 'banner':
+            folder = 'movie-banner'
+            filename = f"{safe_movie_name}Banner.png"
+        else:
+            folder = 'movie-poster'
+            filename = f"{safe_movie_name}Poster.png"
+        
+        # Full object name with folder structure
+        object_name = f"{folder}/{filename}"
         
         # Upload to MinIO
         minio_client.put_object(
             MINIO_BUCKET_NAME,
-            unique_filename,
+            object_name,
             image_file,
             length=image_file.size,
             content_type=image_file.content_type
@@ -661,7 +674,7 @@ def upload_image_to_minio(image_file):
         else:
             protocol = "http"
         
-        image_url = f"{protocol}://{MINIO_ENDPOINT}/{MINIO_BUCKET_NAME}/{unique_filename}"
+        image_url = f"{protocol}://{MINIO_ENDPOINT}/{MINIO_BUCKET_NAME}/{object_name}"
         return image_url
         
     except S3Error as e:
@@ -672,12 +685,14 @@ def upload_image_to_minio(image_file):
         return None
 
 
-def upload_base64_image_to_minio(base64_data):
+def upload_base64_image_to_minio(base64_data, movie_name, image_type='poster'):
     """
     Upload base64 image to MinIO bucket and return the URL.
     
     Args:
         base64_data: Base64 encoded image string (data URL format)
+        movie_name: Name of the movie (used in filename)
+        image_type: Type of image ('poster' or 'banner')
     
     Returns:
         str: URL of the uploaded image or None if failed
@@ -708,9 +723,21 @@ def upload_base64_image_to_minio(base64_data):
         # Create a seekable stream
         image_stream = io.BytesIO(image_data)
         
-        # Generate unique filename
-        unique_filename = f"{uuid.uuid4()}.{file_type}"
-        print(f"Generated filename: {unique_filename}")
+        # Sanitize movie name for filename (remove special characters, replace spaces with underscores)
+        safe_movie_name = re.sub(r'[^a-zA-Z0-9\s-]', '', movie_name)
+        safe_movie_name = re.sub(r'\s+', '_', safe_movie_name.strip())
+        
+        # Determine folder and filename based on image type
+        if image_type == 'banner':
+            folder = 'movie-banner'
+            filename = f"{safe_movie_name}Banner.png"
+        else:
+            folder = 'movie-poster'
+            filename = f"{safe_movie_name}Poster.png"
+        
+        # Full object name with folder structure
+        object_name = f"{folder}/{filename}"
+        print(f"Generated object name: {object_name}")
         
         # Determine content type
         content_type = f"image/{file_type}"
@@ -719,7 +746,7 @@ def upload_base64_image_to_minio(base64_data):
         print(f"Uploading to MinIO bucket: {MINIO_BUCKET_NAME}")
         minio_client.put_object(
             MINIO_BUCKET_NAME,
-            unique_filename,
+            object_name,
             image_stream,
             length=len(image_data),
             content_type=content_type
@@ -731,7 +758,7 @@ def upload_base64_image_to_minio(base64_data):
         else:
             protocol = "http"
         
-        image_url = f"{protocol}://{MINIO_ENDPOINT}/{MINIO_BUCKET_NAME}/{unique_filename}"
+        image_url = f"{protocol}://{MINIO_ENDPOINT}/{MINIO_BUCKET_NAME}/{object_name}"
         print(f"Image uploaded successfully: {image_url}")
         return image_url
         
@@ -961,13 +988,13 @@ def add_movie(request):
         if image_file:
             # Upload file
             print(f"Uploading poster from file: {image_file.name}")
-            poster_image_url = upload_image_to_minio(image_file)
+            poster_image_url = upload_image_to_minio(image_file, title, 'poster')
             if not poster_image_url:
                 return JsonResponse({"error": "Failed to upload poster image from file"}, status=500)
         elif poster_url:
             # Upload base64
             print(f"Uploading poster from base64 (length: {len(poster_url)} chars)")
-            poster_image_url = upload_base64_image_to_minio(poster_url)
+            poster_image_url = upload_base64_image_to_minio(poster_url, title, 'poster')
             if not poster_image_url:
                 return JsonResponse({
                     "error": "Failed to upload poster image from base64",
@@ -980,12 +1007,12 @@ def add_movie(request):
         banner_image_url = None
         if banner_file:
             print(f"Uploading banner from file: {banner_file.name}")
-            banner_image_url = upload_image_to_minio(banner_file)
+            banner_image_url = upload_image_to_minio(banner_file, title, 'banner')
             if not banner_image_url:
                 print("Warning: Failed to upload banner image from file")
         elif banner_url:
             print(f"Uploading banner from base64 (length: {len(banner_url)} chars)")
-            banner_image_url = upload_base64_image_to_minio(banner_url)
+            banner_image_url = upload_base64_image_to_minio(banner_url, title, 'banner')
             if not banner_image_url:
                 print("Warning: Failed to upload banner image from base64")
 
