@@ -37,6 +37,7 @@ client = MongoClient(mongo_url)
 db = client["BT-Enterprise"]
 user_collection = db["users"]
 admin_collection = db['admin']
+movies_collection = db['movies']
 
 
 # ======================= UTILITY FUNCTIONS =======================
