@@ -4,29 +4,70 @@ import BottomNavigation from '../../components/BottomNavigation';
 import MovieCard from '../../components/MovieCard';
 import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
 
-type Movie = { id: number; title: string; image: string };
-
-// Movie poster URLs
-const moviePosters = [
-  'https://media-cache.cinematerial.com/p/500x/fsrcfxma/sk25-indian-movie-poster.jpg?v=1738154160',
-  'https://media-cache.cinematerial.com/p/500x/rim7jkfa/jana-nayagan-indian-movie-poster.jpg?v=1739966840',
-  'https://media-cache.cinematerial.com/p/500x/5yjmdctf/lik-love-insurance-kompany-indian-movie-poster.jpg?v=1740686943',
-  'https://media-cache.cinematerial.com/p/500x/otee0vmo/idly-kadai-indian-movie-poster.jpg?v=1736470603',
-];
-
-// Mock movies data with random poster selection
-const allMockMovies: Movie[] = Array.from({ length: 48 }, (_, i) => ({
-  id: i + 1,
-  title: `Movie ${i + 1}`,
-  image: moviePosters[i % moviePosters.length],
-}));
+type Movie = { 
+  _id: string; 
+  title: string; 
+  poster_url: string;
+  image_url: string;
+  banner_url: string;
+  status: string;
+};
 
 const MOVIES_PER_PAGE = 12;
+const API_URL = 'http://127.0.0.1:8000/api';
+
+// // Movie poster URLs
+// const moviePosters = [
+//   'https://media-cache.cinematerial.com/p/500x/fsrcfxma/sk25-indian-movie-poster.jpg?v=1738154160',
+//   'https://media-cache.cinematerial.com/p/500x/rim7jkfa/jana-nayagan-indian-movie-poster.jpg?v=1739966840',
+//   'https://media-cache.cinematerial.com/p/500x/5yjmdctf/lik-love-insurance-kompany-indian-movie-poster.jpg?v=1740686943',
+//   'https://media-cache.cinematerial.com/p/500x/otee0vmo/idly-kadai-indian-movie-poster.jpg?v=1736470603',
+// ];
+
+// // Mock movies data with random poster selection
+// const allMockMovies: Movie[] = Array.from({ length: 48 }, (_, i) => {
+//   const img = moviePosters[i % moviePosters.length];
+//   return {
+//     _id: String(i + 1),
+//     title: `Movie ${i + 1}`,
+//     poster_url: img,
+//     image_url: img,
+//     banner_url: img,
+//     status: 'available',
+//   } as Movie;
+// });
 
 export default function Movies() {
-  const [movies] = useState<Movie[]>(allMockMovies);
+  const [movies, setMovies] = useState<Movie[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    const fetchMovies = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`${API_URL}/get-movies/`);
+        
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setMovies(data.movies || []);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch movies:', err);
+        setError('Failed to load movies. Please try again later.');
+        setMovies([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMovies();
+  }, []);
 
   // Filter movies based on search query
   const filteredMovies = movies.filter((movie) =>
@@ -82,20 +123,39 @@ export default function Movies() {
             </div>
           </div>
 
+          {/* Loading State */}
+          {loading && (
+            <div className="text-center py-12 sm:py-16">
+              <p className="text-slate-400 text-sm sm:text-base md:text-lg">Loading movies...</p>
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && !loading && (
+            <div className="text-center py-12 sm:py-16">
+              <p className="text-red-400 text-sm sm:text-base md:text-lg">{error}</p>
+            </div>
+          )}
+
           {/* Movies Grid */}
-          {currentMovies.length > 0 ? (
+          {!loading && !error && currentMovies.length > 0 ? (
             <div className="mb-8 sm:mb-10 md:mb-12 pb-24">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 sm:gap-5 md:gap-6 lg:gap-8">
                 {currentMovies.map((movie) => (
-                  <MovieCard key={movie.id} title={movie.title} image={movie.image} />
+                  <MovieCard 
+                    movieId={movie._id}
+                    key={movie._id} 
+                    title={movie.title} 
+                    image={movie.poster_url || movie.image_url} 
+                  />
                 ))}
               </div>
             </div>
-          ) : (
+          ) : !loading && !error ? (
             <div className="text-center py-12 sm:py-16">
               <p className="text-slate-400 text-sm sm:text-base md:text-lg">No movies found matching your search</p>
             </div>
-          )}
+          ) : null}
 
           {/* Pagination */}
           {filteredMovies.length > 0 && (
