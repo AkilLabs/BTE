@@ -23,4 +23,7 @@ urlpatterns = [
     # Movies
     path("get-movies/", get_all_movies, name="get_all_movies"),
     path("get-movie/<str:movie_id>/", get_movie_by_id, name="get_movie_by_id"),
+
+    # Movie Management
+    path("add-movie/", add_movie, name="add_movie"),
 ]
