@@ -26,7 +26,7 @@ export function useUser(): UseUserReturn {
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        const response = await fetch('http://68.183.80.191:8000/api/get_user_profile/', {
+        const response = await fetch('http://localhost:8000/api/get_user_profile/', {
           method: 'GET',
           credentials: 'include',
         });

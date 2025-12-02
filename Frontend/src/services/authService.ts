@@ -1,5 +1,5 @@
 // API Service for authentication endpoints
-const API_BASE_URL = 'http://68.183.80.191:8000/api';
+const API_BASE_URL = 'http://localhost:8000/api';
 
 // ============ PASSWORD RESET ENDPOINTS ============
 

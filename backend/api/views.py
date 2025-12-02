@@ -1041,9 +1041,6 @@ def add_movie(request):
             "details": str(e)
         }, status=500)
 
-
-@csrf_exempt
-def test_minio_connection(request):
     """
     Test MinIO connection and bucket access.
     For debugging purposes.
