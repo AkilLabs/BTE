@@ -147,3 +147,12 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
+
+# Upload limits
+# Maximum size (in bytes) for request body to be read into memory.
+# Set via environment variable `DATA_UPLOAD_MAX_MEMORY_SIZE` (bytes). Default: None (no limit).
+DATA_UPLOAD_MAX_MEMORY_SIZE = None
+# Maximum size (in bytes) for uploaded file to be kept in memory before being streamed to
+# a temporary file. Set via environment variable `FILE_UPLOAD_MAX_MEMORY_SIZE` (bytes).
+# Default: 25MB.
+FILE_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv('FILE_UPLOAD_MAX_MEMORY_SIZE', 26214400))
