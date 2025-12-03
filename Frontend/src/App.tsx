@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ToastProvider } from './context/ToastContext';
+import { BookingProvider } from './context/BookingContext';
 import { ToastContainer } from './components/ToastContainer';
 import UserHome from './pages/user/UserHome';
 import Movies from './pages/user/Movies';
@@ -16,17 +17,21 @@ import NewMovie from './pages/admin/NewMovie';
 import TicketManagement from './pages/admin/TicketManagement';
 import AdminProfile from './pages/admin/AdminProfile';
 import MovieManagement from './pages/admin/MovieManagement';
+import TrendingManagement from './pages/admin/TrendingManagement';
 import UserProfile from './pages/user/UserProfile';
 import PublishShows from './pages/admin/PublishShow';
 import Screen1 from './pages/common/Screen1';
 import Screen2 from './pages/common/Screen2';
+import BookingConfirmation from './pages/user/BookingConfirmation';
+import BookingSuccess from './pages/user/BookingSuccess';
 
 function App() {
   return (
-    <ToastProvider>
-      <BrowserRouter>
-        <div className="min-h-screen">
-          <Routes>
+    <BookingProvider>
+      <ToastProvider>
+        <BrowserRouter>
+          <div className="min-h-screen">
+            <Routes>
             <Route path="/" element={<UserHome />} />
             <Route path="/user-home" element={<UserHome />} />
             <Route path="/movies" element={<Movies />} />
@@ -41,11 +46,14 @@ function App() {
             <Route path="/profile" element={<UserProfile />} />
             <Route path="/booking/:movieId/layout-1" element={<Screen1 />} />
             <Route path="/select-seat-2" element={<Screen2 />} />
+            <Route path="/booking/:movieId/confirmation" element={<BookingConfirmation />} />
+            <Route path="/booking/success" element={<BookingSuccess />} />
             
             {/* Admin Routes */}
             <Route path="/admin-dashboard" element={<AdminDashboard />} />
             <Route path="/admin-dashboard/new-movie" element={<NewMovie />} />
             <Route path="/admin-dashboard/movie-management" element={<MovieManagement />} />
+            <Route path="/admin-dashboard/trending-management" element={<TrendingManagement />} />
             <Route path="/admin-dashboard/ticket-management" element={<TicketManagement />} />
             <Route path="/admin-dashboard/profile" element={<AdminProfile />} />
             <Route path="/admin-dashboard/movie-management/:movieId" element={<PublishShows />} />
@@ -53,7 +61,8 @@ function App() {
           <ToastContainer />
         </div>
       </BrowserRouter>
-    </ToastProvider>
+      </ToastProvider>
+    </BookingProvider>
   );
 }
 

@@ -3,6 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { TrendingUp, Users, Film, Ticket } from 'lucide-react';
 import AdminNavbar from './AdminNavbar';
 import AdminBottomNavigation from './AdminBottomNavigation';
+import UserFooter from '../../components/UserFooter';
 
 // Sample data for charts
 const revenueData = [
@@ -194,6 +195,7 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
+      <UserFooter />
       <AdminBottomNavigation />
     </div>
   );

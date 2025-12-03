@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { ChevronLeft, Play } from 'lucide-react';
 import UserNavbar from '../../components/UserNavbar';
 import BottomNavigation from '../../components/BottomNavigation';
+import { useBooking } from '../../context/BookingContext';
 
 interface Movie {
   _id: string;
@@ -22,30 +23,24 @@ interface Movie {
   available_seats: number;
   show_times: string[];
   status: string;
+  show_schedule?: any;
 }
+
+const DEFAULT_TICKET_PRICE = 200;
 
 export default function MovieDetails() {
   const { movieId } = useParams<{ movieId: string }>();
   console.log("Movie ID:", movieId);
   const navigate = useNavigate();
+  const { setShowDetails, setSelectedSeats, setTotalPrice } = useBooking();
   const [movie, setMovie] = useState<Movie | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedScreen, setSelectedScreen] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
-  // Sample screens with available seats
-  const screens = [
-    { id: 'screen1', name: 'Screen 1', seats: 300 },
-    { id: 'screen2', name: 'Screen 2', seats: 53 },
-    { id: 'screen3', name: 'Screen 3', seats: 82 },
-  ];
-
-  // Sample show times
-  const showTimes = [
-    '03:00 AM', '06:00 AM', '09:00 AM', '12:00 PM', '03:00 PM', '06:00 PM',
-    '06:00 AM', '09:00 AM', '12:00 PM', '03:00 PM', '03:00 PM'
-  ];
+  // (schedule presence is checked inline where needed)
 
   useEffect(() => {
     const fetchMovie = async () => {
@@ -75,13 +70,29 @@ export default function MovieDetails() {
 
   const handleContinue = () => {
     if (selectedScreen && selectedTime) {
-      if (selectedScreen === 'screen1') {
+      setShowDetails({
+        date: selectedDate,
+        time: selectedTime,
+        screen: selectedScreen,
+        movieTitle: movie?.title,
+        movieId: movieId || undefined,
+        price: DEFAULT_TICKET_PRICE,
+      });
+      setSelectedSeats([]);
+      setTotalPrice(0);
+
+      // Extract the screen number from selectedScreen
+      const screenMatch = selectedScreen.match(/(\d+)/);
+      const screenNum = screenMatch ? screenMatch[1] : null;
+      
+      if (screenNum === '1') {
         navigate(`/booking/${movieId}/layout-1`, {
           state: {
             screen: selectedScreen,
             time: selectedTime,
             movieTitle: movie?.title,
-            price: movie?.ticket_price,
+            price: DEFAULT_TICKET_PRICE,
+            date: selectedDate,
           },
         });
       } else {
@@ -90,7 +101,8 @@ export default function MovieDetails() {
             screen: selectedScreen,
             time: selectedTime,
             movieTitle: movie?.title,
-            price: movie?.ticket_price,
+            price: DEFAULT_TICKET_PRICE,
+            date: selectedDate,
           },
         });
       }
@@ -116,6 +128,17 @@ export default function MovieDetails() {
   const genreArray = movie.genre.split(',').map(g => g.trim()).join(', ');
   const languageArray = movie.language.split(',').map(l => l.trim()).join(', ');
 
+  const formatScreenName = (screenId: string) => {
+    if (!screenId) return screenId;
+    // Normalize and extract digits (e.g., 'S1' or 's2' -> '01', '02')
+    const match = screenId.match(/(\d+)/);
+    if (match) {
+      const num = match[1].padStart(2, '0');
+      return `Screen ${num}`;
+    }
+    return screenId;
+  };
+
   return (
     <div className="min-h-screen bg-black text-white pb-24 md:pb-8">
       {/* Header */}
@@ -131,8 +154,21 @@ export default function MovieDetails() {
           
           {/* Back Button */}
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => {
+              try {
+                // Prefer navigating back if there is a history entry
+                if (typeof window !== 'undefined' && window.history && window.history.length > 1) {
+                  navigate(-1);
+                } else {
+                  // Fallback to movies listing when no meaningful history
+                  navigate('/movies');
+                }
+              } catch (err) {
+                navigate('/movies');
+              }
+            }}
             className="absolute top-4 left-4 z-10 bg-black/50 hover:bg-black/70 p-2 rounded-full transition duration-200"
+            aria-label="Go back"
           >
             <ChevronLeft size={24} className="text-white" />
           </button>
@@ -236,45 +272,92 @@ export default function MovieDetails() {
           </div>
         </div>
 
-        {/* Available Shows */}
+        {/* Shows / Schedule */}
         <div className="mb-8">
           <h2 className="text-xl md:text-2xl font-bold mb-4">Available Shows</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-            {screens.map((screen) => (
-              <button
-                key={screen.id}
-                onClick={() => setSelectedScreen(screen.id)}
-                className={`p-4 rounded-lg border-2 transition duration-200 text-left ${
-                  selectedScreen === screen.id
-                    ? 'border-yellow-400 bg-yellow-400/10'
-                    : 'border-slate-600 bg-slate-800/30 hover:border-slate-500'
-                }`}
-              >
-                <p className="font-bold text-base md:text-lg">{screen.name}</p>
-                <p className="text-slate-400 text-sm">{screen.seats} Seats</p>
-              </button>
-            ))}
-          </div>
-        </div>
 
-        {/* Available Show Timing */}
-        <div className="mb-8">
-          <h2 className="text-xl md:text-2xl font-bold mb-4">Available Show Timing</h2>
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-2 md:gap-3">
-            {showTimes.map((time, index) => (
-              <button
-                key={index}
-                onClick={() => setSelectedTime(time)}
-                className={`py-2 px-3 md:py-3 md:px-4 rounded-lg text-xs md:text-sm font-medium border transition duration-200 ${
-                  selectedTime === time
-                    ? 'bg-yellow-400 text-black border-yellow-400'
-                    : 'bg-black border-slate-600 text-white hover:border-slate-500'
-                }`}
-              >
-                {time}
-              </button>
-            ))}
-          </div>
+          {/* If no schedule -> show booking soon message */}
+          {!(movie as any).show_schedule || Object.keys((movie as any).show_schedule).length === 0 ? (
+            <div className="py-8 text-center">
+              <p className="text-slate-400">Booking will be open soon</p>
+            </div>
+          ) : (
+            <>
+              {/* Date selector */}
+              <div className="mb-4 flex gap-2 flex-wrap">
+                {Object.keys((movie as any).show_schedule).map((date) => (
+                  <button
+                    key={date}
+                    onClick={() => {
+                      setSelectedDate(date);
+                      setSelectedTime(null);
+                      setSelectedScreen(null);
+                    }}
+                    className={`px-3 py-2 rounded-full text-sm font-medium transition ${
+                      selectedDate === date ? 'bg-yellow-400 text-black' : 'bg-white/8 text-white border border-white/15'
+                    }`}
+                  >
+                    {new Date(date).toLocaleDateString()}
+                  </button>
+                ))}
+              </div>
+
+              {/* If a date is selected, show times first, then screens for the chosen time */}
+              {selectedDate ? (
+                <>
+                  {/* Times for date */}
+                  <div className="mb-6">
+                    <h3 className="text-sm text-slate-400 mb-2">Times</h3>
+                    <div className="grid grid-cols-3 md:grid-cols-6 gap-2 md:gap-3">
+                      {Object.keys((movie as any).show_schedule[selectedDate] || {}).map((time) => (
+                        <button
+                          key={time}
+                          onClick={() => {
+                            setSelectedTime(time);
+                            setSelectedScreen(null);
+                          }}
+                          className={`py-2 px-3 md:py-3 md:px-4 rounded-lg text-xs md:text-sm font-medium border transition duration-200 ${
+                            selectedTime === time
+                              ? 'bg-yellow-400 text-black border-yellow-400'
+                              : 'bg-black border-slate-600 text-white hover:border-slate-500'
+                          }`}
+                        >
+                          {time}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Screens for selected time */}
+                  {selectedTime ? (
+                    <div className="mb-6">
+                      <h3 className="text-sm text-slate-400 mb-2">Screens</h3>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {((movie as any).show_schedule[selectedDate][selectedTime] || []).map((screenId: string) => (
+                          <button
+                            key={screenId}
+                            onClick={() => setSelectedScreen(screenId)}
+                            className={`p-3 rounded-lg border transition text-left ${
+                              selectedScreen === screenId
+                                ? 'border-yellow-400 bg-yellow-400/10'
+                                : 'border-slate-600 bg-slate-800/30 hover:border-slate-500'
+                            }`}
+                          >
+                            <p className="font-semibold">{formatScreenName(screenId)}</p>
+                            <p className="text-slate-400 text-xs">Seats: {movie.available_seats ?? '—'}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="py-4 text-slate-400">Select a time to view available screens</div>
+                  )}
+                </>
+              ) : (
+                <div className="py-4 text-slate-400">Select a date to view available times and screens</div>
+              )}
+            </>
+          )}
         </div>
 
         {/* Continue Button */}
