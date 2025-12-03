@@ -17,9 +17,9 @@ import TicketManagement from './pages/admin/TicketManagement';
 import AdminProfile from './pages/admin/AdminProfile';
 import MovieManagement from './pages/admin/MovieManagement';
 import UserProfile from './pages/user/UserProfile';
+import PublishShows from './pages/admin/PublishShow';
 import Screen1 from './pages/common/Screen1';
 import Screen2 from './pages/common/Screen2';
-import PublishShows from './pages/admin/PublishShow';
 
 function App() {
   return (
