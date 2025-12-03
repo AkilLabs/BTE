@@ -66,7 +66,11 @@ export default function MovieDetails() {
 
   const handleContinue = () => {
     if (selectedScreen && selectedTime) {
-      if (selectedScreen === 'screen1') {
+      // Extract the screen number from selectedScreen
+      const screenMatch = selectedScreen.match(/(\d+)/);
+      const screenNum = screenMatch ? screenMatch[1] : null;
+      
+      if (screenNum === '1') {
         navigate(`/booking/${movieId}/layout-1`, {
           state: {
             screen: selectedScreen,
