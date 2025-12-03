@@ -7,6 +7,11 @@ from bson import ObjectId
 import uuid
 import os
 import json
+import jwt
+import re
+
+# reuse helpers and minio client from views to keep config in one place
+from .views import _extract_jwt_from_request, JWT_SECRET, JWT_ALGORITHM, minio_client, MINIO_BUCKET_NAME, MINIO_ENDPOINT, MINIO_SECURE
 
 # reuse same mongo url as movies.py if available via env, else use hardcoded (not ideal)
 MONGO_URL = os.environ.get("MONGO_URL", "mongodb+srv://haaka:HAAKA%40123@haaka.rd0vpfn.mongodb.net/")
@@ -28,15 +33,41 @@ def hold_seats(request, movie_id, time_str):
     if request.method != "POST":
         return JsonResponse({"ok": False, "error": "Method not allowed"}, status=405)
 
-    try:
-        body = json.loads(request.body.decode("utf-8"))
-    except Exception:
-        return JsonResponse({"ok": False, "error": "Invalid JSON"}, status=400)
+    # Support JSON or multipart/form-data. For multipart, fields live in request.POST and files in request.FILES
+    body = {}
+    if request.content_type and 'multipart/form-data' in request.content_type:
+        # form fields
+        body = request.POST.dict()
+    else:
+        try:
+            body = json.loads(request.body.decode("utf-8") or "{}")
+        except Exception:
+            return JsonResponse({"ok": False, "error": "Invalid JSON"}, status=400)
 
     date = body.get("date")
-    screen_id = body.get("screen_id")
-    seat_ids = body.get("seatIds") or body.get("seat_ids") or []
+    screen_id = body.get("screen_id") or body.get("screenId")
+    seat_ids = body.get("seatIds") or body.get("seat_ids") or body.get("seatIds[]") or []
+    # seatIds may be a JSON string in form-data; try to parse
+    if isinstance(seat_ids, str):
+        try:
+            parsed = json.loads(seat_ids)
+            if isinstance(parsed, list):
+                seat_ids = parsed
+        except Exception:
+            # maybe comma separated
+            seat_ids = [s.strip() for s in seat_ids.split(',') if s.strip()]
+
     user_id = body.get("user_id") or body.get("userId") or None
+
+    # If user_id is not provided, try decode from JWT
+    if not user_id:
+        token = _extract_jwt_from_request(request)
+        if token:
+            try:
+                payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+                user_id = str(payload.get('id'))
+            except Exception:
+                user_id = None
 
     if not date or not screen_id or not seat_ids:
         return JsonResponse({"ok": False, "error": "Missing date, screen_id or seatIds"}, status=400)
@@ -142,6 +173,47 @@ def hold_seats(request, movie_id, time_str):
 
             # 4) No conflicts -> create booking doc with status HOLD
             hold_expires_at = now + timedelta(seconds=HOLD_SECONDS)
+
+            # If files were uploaded in the same request, handle MinIO uploads here and collect URLs
+            uploaded_urls = []
+            if hasattr(request, 'FILES') and request.FILES:
+                files = request.FILES.getlist('screens')
+                if files:
+                    if len(files) > 5:
+                        return JsonResponse({"ok": False, "error": "Maximum 5 files allowed."}, status=400)
+
+                    timestamp = int(datetime.utcnow().timestamp())
+                    # ensure we have a user id for folder; fallback to uuid
+                    folder_user = user_id or str(uuid.uuid4())
+                    for idx, f in enumerate(files, start=1):
+                        content_type = getattr(f, 'content_type', '')
+                        if not content_type or not content_type.startswith('image/'):
+                            return JsonResponse({"ok": False, "error": f"Invalid file type for {getattr(f,'name','file')}. Only images allowed."}, status=400)
+
+                        orig_name = getattr(f, 'name', f'img_{idx}')
+                        safe_name = re.sub(r'[^a-zA-Z0-9._-]', '_', orig_name)
+                        if '.' in safe_name:
+                            ext = safe_name.split('.')[-1]
+                        else:
+                            ext = 'png'
+
+                        filename = f"{timestamp}_{idx}.{ext}"
+                        object_name = f"upi/{folder_user}/{filename}"
+                        try:
+                            minio_client.put_object(
+                                MINIO_BUCKET_NAME,
+                                object_name,
+                                f,
+                                length=getattr(f, 'size', None),
+                                content_type=content_type
+                            )
+                            protocol = 'https' if MINIO_SECURE else 'http'
+                            url = f"{protocol}://{MINIO_ENDPOINT}/{MINIO_BUCKET_NAME}/{object_name}"
+                            uploaded_urls.append(url)
+                        except Exception as e:
+                            print(f"MinIO upload error in hold_seats: {str(e)}")
+                            return JsonResponse({"ok": False, "error": "Failed to upload payment screenshots."}, status=500)
+
             booking_doc = {
                 "movie_id": movie_oid,
                 "date": date,
@@ -154,9 +226,8 @@ def hold_seats(request, movie_id, time_str):
                 "hold_expires_at": hold_expires_at,
                 "created_at": now,
                 "updated_at": now,
-                "history": [
-                    {"actor": user_id or "unknown", "action": "hold_created", "ts": now}
-                ]
+                "payment_screens": uploaded_urls,
+                "history": [{"actor": user_id or "unknown", "action": "hold_created", "ts": now}]
             }
             result = bookings_coll.insert_one(booking_doc, session=session)
             booking_id = str(result.inserted_id)

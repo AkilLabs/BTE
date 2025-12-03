@@ -31,6 +31,7 @@ urlpatterns = [
     path("admin/movies/<str:movie_id>/publish-schedule/", publish_schedule, name="publish_schedule"),
     path("admin/movies/<str:movie_id>/publish-schedule/update/", update_showtime, name="update_showtime"),
     path("admin/movies/<str:movie_id>/publish-schedule/delete/", delete_showtime, name="delete_showtime"),
+    path("upload-payment-screens/", upload_payment_screens, name="upload_payment_screens"),
 
     # Bookings and Shows
     path("shows/<str:movie_id>/<str:time_str>/hold/", hold_seats, name="hold_seats"),

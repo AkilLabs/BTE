@@ -1255,3 +1255,79 @@ def delete_showtime(request, movie_id):
     movie_collection.update_one({"_id": movie_obj_id}, {"$set": {"show_schedule": schedule, "updated_at": datetime.utcnow()}})
 
     return JsonResponse({"message": "Showtime deleted", "schedule": schedule}, status=200)
+
+
+@csrf_exempt
+def upload_payment_screens(request):
+    """
+    Upload payment screenshot images (1-5 files) and store in MinIO under `upi/<user_id>/`.
+
+    Accepts multipart/form-data with files under form key `screens`.
+    Returns JSON with list of URLs uploaded.
+    """
+    if request.method != 'POST':
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+
+    # Extract JWT from Authorization header (Bearer ...) or cookie
+    token = _extract_jwt_from_request(request)
+    if not token:
+        return JsonResponse({"error": "Authentication credentials were not provided."}, status=401)
+
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        user_id = str(payload.get('id'))
+    except jwt.ExpiredSignatureError:
+        return JsonResponse({"error": "Token has expired."}, status=401)
+    except jwt.InvalidTokenError:
+        return JsonResponse({"error": "Invalid token."}, status=401)
+    except Exception:
+        return JsonResponse({"error": "Failed to decode token."}, status=401)
+
+    # Get files
+    files = request.FILES.getlist('screens') if hasattr(request, 'FILES') else []
+    if not files or len(files) == 0:
+        return JsonResponse({"error": "No files provided."}, status=400)
+
+    if len(files) > 5:
+        return JsonResponse({"error": "Maximum 5 files allowed."}, status=400)
+
+    uploaded_urls = []
+    timestamp = int(datetime.utcnow().timestamp())
+
+    for idx, f in enumerate(files, start=1):
+        # Basic content-type check
+        content_type = getattr(f, 'content_type', '')
+        if not content_type or not content_type.startswith('image/'):
+            return JsonResponse({"error": f"Invalid file type for {getattr(f, 'name', 'file')}. Only images allowed."}, status=400)
+
+        # Sanitize filename
+        orig_name = getattr(f, 'name', f'img_{idx}')
+        safe_name = re.sub(r'[^a-zA-Z0-9._-]', '_', orig_name)
+        # Ensure extension exists
+        if '.' in safe_name:
+            ext = safe_name.split('.')[-1]
+        else:
+            ext = 'png'
+
+        filename = f"{timestamp}_{idx}.{ext}"
+        folder = f"upi/{user_id}"
+        object_name = f"{folder}/{filename}"
+
+        try:
+            # For Django UploadedFile, f is file-like and has size
+            minio_client.put_object(
+                MINIO_BUCKET_NAME,
+                object_name,
+                f,
+                length=getattr(f, 'size', None),
+                content_type=content_type
+            )
+
+            protocol = 'https' if MINIO_SECURE else 'http'
+            url = f"{protocol}://{MINIO_ENDPOINT}/{MINIO_BUCKET_NAME}/{object_name}"
+            uploaded_urls.append(url)
+        except Exception as e:
+            print(f"MinIO upload error: {str(e)}")
+            return JsonResponse({"error": "Failed to upload files."}, status=500)
+
+    return JsonResponse({"message": "Files uploaded successfully", "files": uploaded_urls}, status=200)
