@@ -26,6 +26,13 @@ urlpatterns = [
     path("get-movies/", get_all_movies, name="get_all_movies"),
     path("get-movie/<str:movie_id>/", get_movie_by_id, name="get_movie_by_id"),
 
+    # Trending management (admin)
+    path("admin/trending/", trending_list_create, name="trending_list_create"),
+    path("admin/trending/<str:item_id>/", trending_delete, name="trending_delete"),
+
+    # Admin movie update (e.g., toggle is_recent)
+    path("admin/movies/<str:movie_id>/", admin_update_movie, name="admin_update_movie"),
+
     # Movie Management
     path("add-movie/", add_movie, name="add_movie"),
     path("admin/movies/<str:movie_id>/publish-schedule/", publish_schedule, name="publish_schedule"),

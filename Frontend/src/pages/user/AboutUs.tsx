@@ -5,7 +5,7 @@ import BottomNavigation from '../../components/BottomNavigation';
 export default function AboutUs() {
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <UserNavbar />
 
         <main className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 pb-8 sm:pb-24 md:pb-8 md:pt-32">
