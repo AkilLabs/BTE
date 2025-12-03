@@ -75,15 +75,25 @@ export default function MovieDetails() {
 
   const handleContinue = () => {
     if (selectedScreen && selectedTime) {
-      // Navigate to booking page with selected details
-      navigate(`/booking/${movieId}`, {
-        state: {
-          screen: selectedScreen,
-          time: selectedTime,
-          movieTitle: movie?.title,
-          price: movie?.ticket_price
-        }
-      });
+      if (selectedScreen === 'screen1') {
+        navigate(`/booking/${movieId}/layout-1`, {
+          state: {
+            screen: selectedScreen,
+            time: selectedTime,
+            movieTitle: movie?.title,
+            price: movie?.ticket_price,
+          },
+        });
+      } else {
+        navigate(`/booking/${movieId}`, {
+          state: {
+            screen: selectedScreen,
+            time: selectedTime,
+            movieTitle: movie?.title,
+            price: movie?.ticket_price,
+          },
+        });
+      }
     }
   };
 
