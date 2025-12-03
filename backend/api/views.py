@@ -101,6 +101,25 @@ def update_user_last_login(email):
     user_collection.update_one({"email": email}, {"$set": {"last_login": datetime.now()}})
 
 
+def _extract_jwt_from_request(request):
+    """Extract JWT token from Authorization header (Bearer ...) or cookie 'jwt'."""
+    # Try Authorization header first
+    auth_header = None
+    try:
+        auth_header = request.META.get('HTTP_AUTHORIZATION') or request.headers.get('Authorization')
+    except Exception:
+        auth_header = request.META.get('HTTP_AUTHORIZATION')
+
+    if auth_header:
+        parts = auth_header.split()
+        if len(parts) == 2 and parts[0].lower() == 'bearer':
+            return parts[1]
+
+    # Fallback to cookie
+    token = request.COOKIES.get('jwt')
+    return token
+
+
 # === OTP & Email Functions ===
 def generate_otp():
     """Generate a random 6-digit OTP."""
@@ -1072,7 +1091,21 @@ def add_movie(request):
 def publish_schedule(request, movie_id):
     if request.method != "POST":
         return JsonResponse({"error": "Method not allowed"}, status=405)
+    
+    # Verify admin authentication via JWT (Authorization header Bearer or cookie)
+    token = _extract_jwt_from_request(request)
+    if not token:
+        return JsonResponse({"error": "Authorization required"}, status=401)
 
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        role = payload.get("role", "user")
+        if role != "admin":
+            return JsonResponse({"error": "Admin access required"}, status=403)
+    except jwt.ExpiredSignatureError:
+        return JsonResponse({"error": "Token has expired"}, status=401)
+    except jwt.InvalidTokenError:
+        return JsonResponse({"error": "Invalid token"}, status=401)
     try:
         movie_obj_id = ObjectId(movie_id)
     except:
@@ -1107,3 +1140,118 @@ def publish_schedule(request, movie_id):
         "movie_id": movie_id,
         "schedule": schedule
     }, status=200)
+
+
+@csrf_exempt
+def update_showtime(request, movie_id):
+    """Update or add a single showtime for a movie.
+    Expects PUT with JSON body: { "date": "YYYY-MM-DD", "time": "HH:MM", "screens": ["S1","S2"] }
+    Only admins may call this endpoint.
+    """
+    if request.method != "PUT":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+
+    # Auth
+    token = _extract_jwt_from_request(request)
+    if not token:
+        return JsonResponse({"error": "Authorization required"}, status=401)
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        role = payload.get("role", "user")
+        if role != "admin":
+            return JsonResponse({"error": "Admin access required"}, status=403)
+    except jwt.ExpiredSignatureError:
+        return JsonResponse({"error": "Token has expired"}, status=401)
+    except jwt.InvalidTokenError:
+        return JsonResponse({"error": "Invalid token"}, status=401)
+
+    try:
+        movie_obj_id = ObjectId(movie_id)
+    except:
+        return JsonResponse({"error": "Invalid movie ID"}, status=400)
+
+    movie = movie_collection.find_one({"_id": movie_obj_id})
+    if not movie:
+        return JsonResponse({"error": "Movie not found"}, status=404)
+
+    try:
+        data = json.loads(request.body)
+        date = data.get("date")
+        time = data.get("time")
+        screens = data.get("screens", [])
+    except Exception:
+        return JsonResponse({"error": "Invalid JSON body"}, status=400)
+
+    if not date or not time or not isinstance(screens, list):
+        return JsonResponse({"error": "date, time and screens are required"}, status=400)
+
+    schedule = movie.get("show_schedule", {}) or {}
+    if date not in schedule:
+        schedule[date] = {}
+    schedule[date][time] = screens
+
+    movie_collection.update_one({"_id": movie_obj_id}, {"$set": {"show_schedule": schedule, "updated_at": datetime.utcnow()}})
+
+    return JsonResponse({"message": "Showtime updated", "schedule": schedule}, status=200)
+
+
+@csrf_exempt
+def delete_showtime(request, movie_id):
+    """Delete a single showtime for a movie.
+    Expects DELETE with JSON body: { "date": "YYYY-MM-DD", "time": "HH:MM" }
+    Only admins may call this endpoint.
+    """
+    if request.method != "DELETE":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+
+    # Auth
+    token = _extract_jwt_from_request(request)
+    if not token:
+        return JsonResponse({"error": "Authorization required"}, status=401)
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        role = payload.get("role", "user")
+        if role != "admin":
+            return JsonResponse({"error": "Admin access required"}, status=403)
+    except jwt.ExpiredSignatureError:
+        return JsonResponse({"error": "Token has expired"}, status=401)
+    except jwt.InvalidTokenError:
+        return JsonResponse({"error": "Invalid token"}, status=401)
+
+    try:
+        movie_obj_id = ObjectId(movie_id)
+    except:
+        return JsonResponse({"error": "Invalid movie ID"}, status=400)
+
+    movie = movie_collection.find_one({"_id": movie_obj_id})
+    if not movie:
+        return JsonResponse({"error": "Movie not found"}, status=404)
+
+    try:
+        data = json.loads(request.body)
+        date = data.get("date")
+        time = data.get("time")
+    except Exception:
+        return JsonResponse({"error": "Invalid JSON body"}, status=400)
+
+    if not date or not time:
+        return JsonResponse({"error": "date and time are required"}, status=400)
+
+    schedule = movie.get("show_schedule", {}) or {}
+    if date not in schedule or time not in schedule.get(date, {}):
+        return JsonResponse({"error": "Showtime not found"}, status=404)
+
+    # Remove time
+    times = schedule.get(date, {})
+    if time in times:
+        del times[time]
+
+    if len(times) == 0:
+        if date in schedule:
+            del schedule[date]
+    else:
+        schedule[date] = times
+
+    movie_collection.update_one({"_id": movie_obj_id}, {"$set": {"show_schedule": schedule, "updated_at": datetime.utcnow()}})
+
+    return JsonResponse({"message": "Showtime deleted", "schedule": schedule}, status=200)

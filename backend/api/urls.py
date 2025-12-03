@@ -29,6 +29,8 @@ urlpatterns = [
     # Movie Management
     path("add-movie/", add_movie, name="add_movie"),
     path("admin/movies/<str:movie_id>/publish-schedule/", publish_schedule, name="publish_schedule"),
+    path("admin/movies/<str:movie_id>/publish-schedule/update/", update_showtime, name="update_showtime"),
+    path("admin/movies/<str:movie_id>/publish-schedule/delete/", delete_showtime, name="delete_showtime"),
 
 
     # Bookings and Shows
