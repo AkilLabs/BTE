@@ -860,6 +860,7 @@ export default function NewMovie() {
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-8 md:pt-24 pb-24 md:pb-8">
         <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">{isEditing ? 'Edit Movie' : 'Create Movies'}</h1>
+          <p className="text-slate-400 text-xs sm:text-sm md:text-base">Fill in the details below to {isEditing ? 'update the movie' : 'add a new movie'}.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -1034,167 +1035,169 @@ export default function NewMovie() {
             />
           </div>
 
-          <div>
-            <label className="block text-white text-sm font-semibold mb-3">Movie Poster (Card Ratio 3:4):</label>
-            <div
-              className="relative w-full md:max-w-sm lg:max-w-md mx-auto md:mx-0"
-              style={{ aspectRatio: '3 / 4' }}
-            >
-              {!formData.posterUrl ? (
-                <label className="absolute inset-0 border-2 border-dashed border-white/30 rounded-xl flex flex-col items-center justify-center gap-3 bg-black/40 hover:border-yellow-400/80 hover:bg-black/30 transition cursor-pointer">
-                  <Upload className="w-10 h-10 text-slate-300" />
-                  <div className="text-center">
-                    <p className="text-white font-semibold">Select Poster</p>
-                    <p className="text-slate-300 text-xs">Tap to upload and crop</p>
-                  </div>
-                  <input
-                    type="file"
-                    onChange={handlePosterImageChange}
-                    accept="image/*"
-                    className="hidden"
-                  />
-                </label>
-              ) : (
-                <div className="absolute inset-0 rounded-xl overflow-hidden">
-                  <img
-                    src={formData.posterUrl}
-                    alt="Poster"
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 border border-yellow-400/70 pointer-events-none rounded-xl" />
-                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/50 opacity-100 md:opacity-0 md:hover:opacity-100 transition flex flex-col justify-end p-4 gap-2">
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const sourceImage = posterOriginalImage ?? formData.posterUrl;
-                          if (sourceImage) {
-                            setPosterImage(sourceImage);
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+            <div>
+              <label className="block text-white text-sm font-semibold mb-3">Movie Poster (Card Ratio 3:4):</label>
+              <div
+                className="relative w-full max-w-xs"
+                style={{ aspectRatio: '3 / 4' }}
+              >
+                {!formData.posterUrl ? (
+                  <label className="absolute inset-0 border-2 border-dashed border-white/30 rounded-xl flex flex-col items-center justify-center gap-3 bg-black/40 hover:border-yellow-400/80 hover:bg-black/30 transition cursor-pointer">
+                    <Upload className="w-10 h-10 text-slate-300" />
+                    <div className="text-center">
+                      <p className="text-white font-semibold">Select Poster</p>
+                      <p className="text-slate-300 text-xs">Tap to upload and crop</p>
+                    </div>
+                    <input
+                      type="file"
+                      onChange={handlePosterImageChange}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                  </label>
+                ) : (
+                  <div className="absolute inset-0 rounded-xl overflow-hidden">
+                    <img
+                      src={formData.posterUrl}
+                      alt="Poster"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 border border-yellow-400/70 pointer-events-none rounded-xl" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/50 opacity-100 md:opacity-0 md:hover:opacity-100 transition flex flex-col justify-end p-4 gap-2">
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const sourceImage = posterOriginalImage ?? formData.posterUrl;
+                            if (sourceImage) {
+                              setPosterImage(sourceImage);
+                              setPosterZoom(1);
+                              setPosterOffsetX(0);
+                              setPosterOffsetY(0);
+                              setPosterBaseScale(1);
+                              setPosterImageSize(null);
+                              setPosterViewportSize(null);
+                              setShowPosterCrop(true);
+                            }
+                          }}
+                          className="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-black font-semibold rounded-lg transition"
+                        >
+                          Edit Crop
+                        </button>
+                        <label className="px-4 py-2 bg-white/90 hover:bg-white text-black font-semibold rounded-lg transition cursor-pointer">
+                          Replace
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handlePosterImageChange}
+                            className="hidden"
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData((prev) => ({ ...prev, posterUrl: '' }));
+                            setPosterOriginalImage(null);
+                            setPosterImage(null);
                             setPosterZoom(1);
                             setPosterOffsetX(0);
                             setPosterOffsetY(0);
                             setPosterBaseScale(1);
                             setPosterImageSize(null);
                             setPosterViewportSize(null);
-                            setShowPosterCrop(true);
-                          }
-                        }}
-                        className="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-black font-semibold rounded-lg transition"
-                      >
-                        Edit Crop
-                      </button>
-                      <label className="px-4 py-2 bg-white/90 hover:bg-white text-black font-semibold rounded-lg transition cursor-pointer">
-                        Replace
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handlePosterImageChange}
-                          className="hidden"
-                        />
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setFormData((prev) => ({ ...prev, posterUrl: '' }));
-                          setPosterOriginalImage(null);
-                          setPosterImage(null);
-                          setPosterZoom(1);
-                          setPosterOffsetX(0);
-                          setPosterOffsetY(0);
-                          setPosterBaseScale(1);
-                          setPosterImageSize(null);
-                          setPosterViewportSize(null);
-                        }}
-                        className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition"
-                      >
-                        Remove
-                      </button>
+                          }}
+                          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition"
+                        >
+                          Remove
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
 
-          <div>
-            <label className="block text-white text-sm font-semibold mb-3">Movie Banner (Landscape 16:9):</label>
-            <div
-              className="relative w-full md:max-w-3xl mx-auto md:mx-0"
-              style={{ aspectRatio: '16 / 9' }}
-            >
-              {!formData.bannerUrl ? (
-                <label className="absolute inset-0 border-2 border-dashed border-white/30 rounded-xl flex flex-col items-center justify-center gap-3 bg-black/40 hover:border-yellow-400/80 hover:bg-black/30 transition cursor-pointer">
-                  <Upload className="w-10 h-10 text-slate-300" />
-                  <div className="text-center">
-                    <p className="text-white font-semibold">Select Banner</p>
-                    <p className="text-slate-300 text-xs">Tap to upload and crop</p>
-                  </div>
-                  <input
-                    type="file"
-                    onChange={handleBannerImageChange}
-                    accept="image/*"
-                    className="hidden"
-                  />
-                </label>
-              ) : (
-                <div className="absolute inset-0 rounded-xl overflow-hidden">
-                  <img
-                    src={formData.bannerUrl}
-                    alt="Banner"
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 border border-yellow-400/70 pointer-events-none rounded-xl" />
-                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/50 opacity-100 md:opacity-0 md:hover:opacity-100 transition flex flex-col justify-end p-4 gap-2">
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const sourceImage = bannerOriginalImage ?? formData.bannerUrl;
-                          if (sourceImage) {
-                            setBannerImage(sourceImage);
+            <div>
+              <label className="block text-white text-sm font-semibold mb-3">Movie Banner (Landscape 16:9):</label>
+              <div
+                className="relative w-full"
+                style={{ aspectRatio: '16 / 9' }}
+              >
+                {!formData.bannerUrl ? (
+                  <label className="absolute inset-0 border-2 border-dashed border-white/30 rounded-xl flex flex-col items-center justify-center gap-3 bg-black/40 hover:border-yellow-400/80 hover:bg-black/30 transition cursor-pointer">
+                    <Upload className="w-10 h-10 text-slate-300" />
+                    <div className="text-center">
+                      <p className="text-white font-semibold">Select Banner</p>
+                      <p className="text-slate-300 text-xs">Tap to upload and crop</p>
+                    </div>
+                    <input
+                      type="file"
+                      onChange={handleBannerImageChange}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                  </label>
+                ) : (
+                  <div className="absolute inset-0 rounded-xl overflow-hidden">
+                    <img
+                      src={formData.bannerUrl}
+                      alt="Banner"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 border border-yellow-400/70 pointer-events-none rounded-xl" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/50 opacity-100 md:opacity-0 md:hover:opacity-100 transition flex flex-col justify-end p-4 gap-2">
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const sourceImage = bannerOriginalImage ?? formData.bannerUrl;
+                            if (sourceImage) {
+                              setBannerImage(sourceImage);
+                              setBannerZoom(1);
+                              setBannerOffsetX(0);
+                              setBannerOffsetY(0);
+                              setBannerBaseScale(1);
+                              setBannerImageSize(null);
+                              setBannerViewportSize(null);
+                              setShowBannerCrop(true);
+                            }
+                          }}
+                          className="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-black font-semibold rounded-lg transition"
+                        >
+                          Edit Crop
+                        </button>
+                        <label className="px-4 py-2 bg-white/90 hover:bg-white text-black font-semibold rounded-lg transition cursor-pointer">
+                          Replace
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleBannerImageChange}
+                            className="hidden"
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData((prev) => ({ ...prev, bannerUrl: '' }));
+                            setBannerOriginalImage(null);
+                            setBannerImage(null);
                             setBannerZoom(1);
                             setBannerOffsetX(0);
                             setBannerOffsetY(0);
                             setBannerBaseScale(1);
                             setBannerImageSize(null);
                             setBannerViewportSize(null);
-                            setShowBannerCrop(true);
-                          }
-                        }}
-                        className="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-black font-semibold rounded-lg transition"
-                      >
-                        Edit Crop
-                      </button>
-                      <label className="px-4 py-2 bg-white/90 hover:bg-white text-black font-semibold rounded-lg transition cursor-pointer">
-                        Replace
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleBannerImageChange}
-                          className="hidden"
-                        />
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setFormData((prev) => ({ ...prev, bannerUrl: '' }));
-                          setBannerOriginalImage(null);
-                          setBannerImage(null);
-                          setBannerZoom(1);
-                          setBannerOffsetX(0);
-                          setBannerOffsetY(0);
-                          setBannerBaseScale(1);
-                          setBannerImageSize(null);
-                          setBannerViewportSize(null);
-                        }}
-                        className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition"
-                      >
-                        Remove
-                      </button>
+                          }}
+                          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition"
+                        >
+                          Remove
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
 

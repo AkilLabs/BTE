@@ -78,10 +78,18 @@ export default function MovieManagement() {
       <div className="max-w-7xl mx-auto">
         <AdminNavbar />
 
-        <main className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 pb-8 sm:pb-24 md:pb-8 md:pt-32">
-          <div className="mb-4 sm:mb-6 md:mb-8">
-            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-1 sm:mb-2">Movie management</h1>
-            <p className="text-slate-400 text-xs sm:text-sm md:text-base">Manage recent movies created by admins</p>
+        <main className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 pb-8 sm:pb-24 md:pb-8 md:pt-28">
+          <div className="flex items-start justify-between gap-4 mb-4 sm:mb-6 md:mb-8">
+            <div>
+              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-1 sm:mb-2">Movie Management</h1>
+              <p className="text-slate-400 text-xs sm:text-sm md:text-base">Manage recent movies created by admins</p>
+            </div>
+            <button
+              onClick={() => navigate('/admin-dashboard/new-movie')}
+              className="bg-yellow-400 text-black px-4 py-2 rounded-full hover:bg-yellow-500 transition duration-200 text-sm font-bold whitespace-nowrap"
+            >
+              New Movie
+            </button>
           </div>
 
           <div className="mb-4 sm:mb-6 md:mb-8">
