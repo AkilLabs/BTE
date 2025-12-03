@@ -152,6 +152,12 @@ def send_otp_email(email, otp, user_name):
         print(f"Email sending failed: {str(e)}")
         return False
 
+
+# === Validators ===
+NAME_RE = re.compile(r"^[A-Za-z.\-\s]{2,}$")     # letters, spaces, dot, hyphen
+PHONE_RE = re.compile(r"^\d{7,15}$")             # digits only, 7–15
+EMAIL_RE = re.compile(r"[^@]+@[^@]+\.[^@]+")     # simple email check
+
 #================================USER====================================================================================================
 
 @csrf_exempt
@@ -283,82 +289,6 @@ def get_user_profile(request):
     except jwt.InvalidTokenError:
         return JsonResponse({"error": "Invalid token"}, status=401)
     except Exception:
-        return JsonResponse({"error": "An unexpected error occurred."}, status=500)
-    
-@csrf_exempt
-def update_user_profile(request):
-    """Updates profile for the authenticated user/admin using JWT in cookies."""
-    if request.method != "POST":
-        return JsonResponse({"error": "Method not allowed"}, status=405)
-
-    # Get JWT from cookies
-    token = request.COOKIES.get("jwt")
-    if not token:
-        return JsonResponse({"error": "Authorization cookie missing"}, status=401)
-
-    try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        user_id = payload.get("id")
-        role = payload.get("role", "user")
-
-        if not user_id:
-            return JsonResponse({"error": "Invalid token payload"}, status=401)
-
-        # Parse request data
-        data = json.loads(request.body or "{}")
-        name = data.get("name", "").strip()
-        phone_number = data.get("phone_number", "").strip()
-
-
-        # Get collection based on role
-        collection = admin_collection if role == "admin" else user_collection
-        user = collection.find_one({"_id": ObjectId(user_id)})
-        
-        if not user:
-            return JsonResponse({"error": "User not found"}, status=404)
-
-        # Prepare update data
-        update_data = {"updated_at": datetime.now()}
-        
-        if name:
-            update_data["name"] = name
-        if phone_number:
-            update_data["phone_number"] = phone_number
-
-        # Update user in database
-        collection.update_one(
-            {"_id": ObjectId(user_id)},
-            {"$set": update_data}
-        )
-
-        # Fetch updated user
-        updated_user = collection.find_one({"_id": ObjectId(user_id)})
-
-        profile = {
-            "id": str(updated_user.get("_id")),
-            "name": updated_user.get("name"),
-            "email": updated_user.get("email"),
-            "phone_number": updated_user.get("phone_number"),
-            "role": updated_user.get("role", role),
-            "created_at": updated_user.get("created_at").isoformat() if updated_user.get("created_at") else None,
-            "last_login": updated_user.get("last_login").isoformat() if updated_user.get("last_login") else None,
-            "updated_at": updated_user.get("updated_at").isoformat() if updated_user.get("updated_at") else None,
-        }
-        
-        if role == "admin":
-            profile["status"] = updated_user.get("status")
-
-        return JsonResponse({
-            "message": "Profile updated successfully",
-            "profile": profile
-        }, status=200)
-
-    except jwt.ExpiredSignatureError:
-        return JsonResponse({"error": "Token has expired"}, status=401)
-    except jwt.InvalidTokenError:
-        return JsonResponse({"error": "Invalid token"}, status=401)
-    except Exception as e:
-        print(f"Update profile error: {str(e)}")
         return JsonResponse({"error": "An unexpected error occurred."}, status=500)
 
 #=======================================ADMIN==========================================================================================
@@ -1138,31 +1068,42 @@ def add_movie(request):
             "details": str(e)
         }, status=500)
 
-    """
-    Test MinIO connection and bucket access.
-    For debugging purposes.
-    """
-    if request.method != "GET":
+@csrf_exempt
+def publish_schedule(request, movie_id):
+    if request.method != "POST":
         return JsonResponse({"error": "Method not allowed"}, status=405)
-    
+
     try:
-        # Test connection
-        bucket_exists = minio_client.bucket_exists(MINIO_BUCKET_NAME)
-        
-        return JsonResponse({
-            "status": "success",
-            "minio_endpoint": MINIO_ENDPOINT,
-            "bucket_name": MINIO_BUCKET_NAME,
-            "bucket_exists": bucket_exists,
-            "secure": MINIO_SECURE,
-            "message": "MinIO connection successful" if bucket_exists else "Bucket does not exist"
-        }, status=200)
-        
-    except Exception as e:
-        return JsonResponse({
-            "status": "error",
-            "minio_endpoint": MINIO_ENDPOINT,
-            "bucket_name": MINIO_BUCKET_NAME,
-            "error": str(e),
-            "message": "Failed to connect to MinIO. Please ensure MinIO server is running."
-        }, status=500)
+        movie_obj_id = ObjectId(movie_id)
+    except:
+        return JsonResponse({"error": "Invalid movie ID"}, status=400)
+
+    movie = movie_collection.find_one({"_id": movie_obj_id})
+    if not movie:
+        return JsonResponse({"error": "Movie not found"}, status=404)
+
+    try:
+        data = json.loads(request.body)
+        schedule = data.get("schedule", {})
+    except:
+        return JsonResponse({"error": "Invalid JSON body"}, status=400)
+
+    if not schedule:
+        return JsonResponse({"error": "Schedule cannot be empty"}, status=400)
+
+    movie_collection.update_one(
+        {"_id": movie_obj_id},
+        {
+            "$set": {
+                "show_schedule": schedule,
+                "state": "SCREENS_PUBLISHED",
+                "updated_at": datetime.utcnow()
+            }
+        }
+    )
+
+    return JsonResponse({
+        "message": "Showtimes and screens published successfully",
+        "movie_id": movie_id,
+        "schedule": schedule
+    }, status=200)

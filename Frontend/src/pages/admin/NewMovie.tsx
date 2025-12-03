@@ -377,6 +377,64 @@ export default function NewMovie() {
 
   const VITE_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
+  // Edit mode state: if `movieId` query param present, we fetch movie and prefill form
+  const [editingMovieId, setEditingMovieId] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const movieId = params.get('movieId');
+    if (!movieId) return;
+
+    setEditingMovieId(movieId);
+    setIsEditing(true);
+
+    const fetchMovie = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(`${VITE_API_URL}/api/get-movie/${movieId}/`);
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.error || 'Failed to load movie for edit', 'error');
+          return;
+        }
+        const data = await res.json();
+        const movie = data.movie || data;
+
+        // Map backend fields to form fields (be tolerant of naming)
+        setFormData((prev) => ({
+          ...prev,
+          title: movie.title || prev.title,
+          description: movie.description || movie.storyline || prev.description,
+          genre: Array.isArray(movie.genre) ? movie.genre : movie.genre ? [movie.genre] : prev.genre,
+          duration: movie.duration ? String(movie.duration) : movie.duration || prev.duration,
+          releaseDate: movie.release_date || movie.releaseDate || prev.releaseDate,
+          language: movie.language || prev.language,
+          rating: movie.rating || movie.censorship || prev.rating,
+          posterUrl: movie.poster_url || movie.posterUrl || prev.posterUrl,
+          bannerUrl: movie.banner_url || movie.bannerUrl || prev.bannerUrl,
+          director: movie.director || prev.director,
+          cast: movie.cast || prev.cast,
+        }));
+
+        // If poster/banner URLs are present, set originals so preview shows
+        if (movie.poster_url || movie.posterUrl) setPosterOriginalImage(movie.poster_url || movie.posterUrl);
+        if (movie.banner_url || movie.bannerUrl) setBannerOriginalImage(movie.banner_url || movie.bannerUrl);
+
+        showToast('Loaded movie for editing', 'success');
+      } catch (err) {
+        console.error('Failed to fetch movie for edit', err);
+        showToast('Failed to load movie for edit', 'error');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMovie();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     const storedState = loadStoredState();
     if (!storedState) {
@@ -735,8 +793,14 @@ export default function NewMovie() {
         return;
       }
 
-      const response = await fetch(`${VITE_API_URL}/api/add-movie/`, {
-        method: 'POST',
+      // If editing an existing movie, call update endpoint, otherwise add new
+      const isUpdate = Boolean(editingMovieId);
+      const endpoint = isUpdate
+        ? `${VITE_API_URL}/api/update-movie/${editingMovieId}/`
+        : `${VITE_API_URL}/api/add-movie/`;
+
+      const response = await fetch(endpoint, {
+        method: isUpdate ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -747,11 +811,11 @@ export default function NewMovie() {
       const data = await response.json();
 
       if (!response.ok) {
-        showToast(data.error || 'Failed to add movie', 'error');
+        showToast(data.error || (isUpdate ? 'Failed to update movie' : 'Failed to add movie'), 'error');
         return;
       }
 
-      showToast('Movie added successfully! 🎬', 'success');
+      showToast(isUpdate ? 'Movie updated successfully! 🎬' : 'Movie added successfully! 🎬', 'success');
 
       skipNextPersist.current = true;
       if (typeof window !== 'undefined') {
@@ -795,7 +859,7 @@ export default function NewMovie() {
 
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-8 md:pt-24 pb-24 md:pb-8">
         <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">Create Movies</h1>
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">{isEditing ? 'Edit Movie' : 'Create Movies'}</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -1167,7 +1231,7 @@ export default function NewMovie() {
               disabled={loading}
               className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold rounded-full px-12 py-2.5 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Creating...' : 'Create'}
+              {loading ? (isEditing ? 'Updating...' : 'Creating...') : (isEditing ? 'Update' : 'Create')}
             </button>
           </div>
         </form>
