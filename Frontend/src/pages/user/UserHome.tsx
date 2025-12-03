@@ -6,55 +6,57 @@ import BottomNavigation from '../../components/BottomNavigation';
 import MovieCard from '../../components/MovieCard';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-// Trending carousel images
-const trendingImages = [
-  'https://images.filmibeat.com/img/2025/03/jananayaganmain-1742791702.jpg',
-  'https://webneel.com/daily/sites/default/files/images/daily/01-2019/6-movie-poster-design-kollywood-tamil-imaikanodigal-prathoolnt.jpg',
-  'https://images.ottplay.com/images/sj-suryah-1722082237.jpg?impolicy=ottplay-202501_high&width=350&height=200',
-];
-
-// Movie poster URLs for Recent Movies
-const moviePosters = [
-  'https://media-cache.cinematerial.com/p/500x/fsrcfxma/sk25-indian-movie-poster.jpg?v=1738154160',
-  'https://media-cache.cinematerial.com/p/500x/rim7jkfa/jana-nayagan-indian-movie-poster.jpg?v=1739966840',
-  'https://media-cache.cinematerial.com/p/500x/5yjmdctf/lik-love-insurance-kompany-indian-movie-poster.jpg?v=1740686943',
-  'https://media-cache.cinematerial.com/p/500x/otee0vmo/idly-kadai-indian-movie-poster.jpg?v=1736470603',
-];
-
-type Movie = { id: number; title: string; image: string };
-
-const initialMockMovies: Movie[] = [
-  { id: 1, title: 'Movie 1', image: moviePosters[0] },
-  { id: 2, title: 'Movie 2', image: moviePosters[1] },
-  { id: 3, title: 'Movie 3', image: moviePosters[2] },
-  { id: 4, title: 'Movie 4', image: moviePosters[3] },
-  { id: 5, title: 'Movie 5', image: moviePosters[0] },
-  { id: 6, title: 'Movie 6', image: moviePosters[1] },
-  { id: 7, title: 'Movie 7', image: moviePosters[2] },
-  { id: 8, title: 'Movie 8', image: moviePosters[3] },
-];
+// Types
+type TrendingItem = { id: string; image_url: string; title?: string };
+type Movie = { _id?: string; id?: number; title: string; image?: string; poster_url?: string };
 
 export default function UserHome() {
   const navigate = useNavigate();
   const { user, loading, isAuthenticated } = useUser();
   const [movies, setMovies] = useState<Movie[]>([]);
   const [currentTrendingIndex, setCurrentTrendingIndex] = useState(0);
+  const [trendingImages, setTrendingImages] = useState<TrendingItem[]>([]);
 
   useEffect(() => {
-    // Simulate fetching movies from backend (mock data for now)
-    const timeout = setTimeout(() => {
-      setMovies(initialMockMovies);
-    }, 400);
-    return () => clearTimeout(timeout);
+    // Fetch trending images and recent movies from backend
+    const API = 'http://127.0.0.1:8000/api';
+
+    const fetchTrending = async () => {
+      try {
+        const res = await fetch(`${API}/admin/trending/`);
+        if (!res.ok) throw new Error('Failed to load trending');
+        const data = await res.json();
+        setTrendingImages(data.trending || []);
+      } catch (err) {
+        console.error('Trending fetch error', err);
+      }
+    };
+
+    const fetchRecentMovies = async () => {
+      try {
+        const res = await fetch(`${API}/get-movies/`);
+        if (!res.ok) throw new Error('Failed to load movies');
+        const data = await res.json();
+        const moviesRaw = data.movies || [];
+        // filter recent movies (is_recent flag)
+        const recent = moviesRaw.filter((m: any) => m.is_recent).map((m: any) => ({ _id: m._id, title: m.title, image: m.poster_url || m.image_url }));
+        setMovies(recent);
+      } catch (err) {
+        console.error('Movies fetch error', err);
+      }
+    };
+
+    fetchTrending();
+    fetchRecentMovies();
   }, []);
 
   // Auto-slide carousel every 3.5 seconds
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentTrendingIndex((prev) => (prev === trendingImages.length - 1 ? 0 : prev + 1));
+      setCurrentTrendingIndex((prev) => (trendingImages.length ? (prev === trendingImages.length - 1 ? 0 : prev + 1) : 0));
     }, 3500);
     return () => clearInterval(interval);
-  }, []);
+  }, [trendingImages]);
 
   const handlePreviousTrending = () => {
     setCurrentTrendingIndex((prev) => (prev === 0 ? trendingImages.length - 1 : prev - 1));
@@ -84,8 +86,8 @@ export default function UserHome() {
               <div className="relative rounded-xl overflow-hidden border border-slate-800 shadow-lg group">
                 {/* Carousel Image */}
                 <img 
-                  src={trendingImages[currentTrendingIndex]} 
-                  alt={`Trending ${currentTrendingIndex + 1}`} 
+                  src={trendingImages.length ? trendingImages[currentTrendingIndex]?.image_url : ''} 
+                  alt={trendingImages.length ? (trendingImages[currentTrendingIndex]?.title || `Trending ${currentTrendingIndex + 1}`) : 'Trending'} 
                   className="w-full h-48 sm:h-64 md:h-96 object-cover transition-all duration-500"
                 />
                 
@@ -136,8 +138,8 @@ export default function UserHome() {
             <div className="mt-4">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 sm:gap-5 md:gap-6 lg:gap-8">
                 {movies.map((m) => (
-                  <div key={m.id}>
-                    <MovieCard title={m.title} image={m.image} />
+                  <div key={m._id || m.id}>
+                    <MovieCard movieId={m._id || String(m.id)} title={m.title} image={m.image || ''} />
                   </div>
                 ))}
               </div>

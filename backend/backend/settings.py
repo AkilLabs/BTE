@@ -156,3 +156,7 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = None
 # a temporary file. Set via environment variable `FILE_UPLOAD_MAX_MEMORY_SIZE` (bytes).
 # Default: 25MB.
 FILE_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv('FILE_UPLOAD_MAX_MEMORY_SIZE', 26214400))
+
+# Media files (uploaded images)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = str(BASE_DIR / 'media')

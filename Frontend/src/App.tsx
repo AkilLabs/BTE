@@ -17,6 +17,7 @@ import NewMovie from './pages/admin/NewMovie';
 import TicketManagement from './pages/admin/TicketManagement';
 import AdminProfile from './pages/admin/AdminProfile';
 import MovieManagement from './pages/admin/MovieManagement';
+import TrendingManagement from './pages/admin/TrendingManagement';
 import UserProfile from './pages/user/UserProfile';
 import PublishShows from './pages/admin/PublishShow';
 import Screen1 from './pages/common/Screen1';
@@ -50,6 +51,7 @@ function App() {
             <Route path="/admin-dashboard" element={<AdminDashboard />} />
             <Route path="/admin-dashboard/new-movie" element={<NewMovie />} />
             <Route path="/admin-dashboard/movie-management" element={<MovieManagement />} />
+            <Route path="/admin-dashboard/trending-management" element={<TrendingManagement />} />
             <Route path="/admin-dashboard/ticket-management" element={<TicketManagement />} />
             <Route path="/admin-dashboard/profile" element={<AdminProfile />} />
             <Route path="/admin-dashboard/movie-management/:movieId" element={<PublishShows />} />
