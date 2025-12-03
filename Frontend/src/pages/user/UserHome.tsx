@@ -40,8 +40,19 @@ export default function UserHome() {
         const data = await res.json();
         const moviesRaw = data.movies || [];
         // filter recent movies (is_recent flag)
-        const recent = moviesRaw.filter((m: any) => m.is_recent).map((m: any) => ({ _id: m._id, title: m.title, image: m.poster_url || m.image_url }));
-        setMovies(recent);
+        let recent = moviesRaw.filter((m: any) => m.is_recent);
+
+        // If backend doesn't have any is_recent flags, fallback to newest movies by created_at/release_date
+        if (!recent || recent.length === 0) {
+          recent = moviesRaw.slice().sort((a: any, b: any) => {
+            const ta = Date.parse(a.created_at || a.release_date || '') || 0;
+            const tb = Date.parse(b.created_at || b.release_date || '') || 0;
+            return tb - ta;
+          }).slice(0, 8); // show up to 8 recent
+        }
+
+        const mapped = recent.map((m: any) => ({ _id: m._id, title: m.title, image: m.poster_url || m.image_url || '' }));
+        setMovies(mapped);
       } catch (err) {
         console.error('Movies fetch error', err);
       }
@@ -73,25 +84,25 @@ export default function UserHome() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <UserNavbar />
 
         <main className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 pb-8 sm:pb-24 md:pb-8 md:pt-32">
           {/* Trending Carousel */}
           <section>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl sm:text-2xl font-bold">Trending Around You !</h3>
+              <h3 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-1 sm:mb-2">Trending Around You !</h3>
             </div>
             <div className="mb-8">
               <div className="h-0.5 w-full bg-slate-800 mb-4" />
               <div className="relative rounded-xl overflow-hidden border border-slate-800 shadow-lg group">
                 {/* Carousel Image */}
-                <img 
-                  src={trendingImages.length ? trendingImages[currentTrendingIndex]?.image_url : ''} 
-                  alt={trendingImages.length ? (trendingImages[currentTrendingIndex]?.title || `Trending ${currentTrendingIndex + 1}`) : 'Trending'} 
+                <img
+                  src={trendingImages.length ? trendingImages[currentTrendingIndex]?.image_url : ''}
+                  alt={trendingImages.length ? (trendingImages[currentTrendingIndex]?.title || `Trending ${currentTrendingIndex + 1}`) : 'Trending'}
                   className="w-full h-48 sm:h-64 md:h-96 object-cover transition-all duration-500"
                 />
-                
+
                 {/* Previous Button */}
                 <button
                   onClick={handlePreviousTrending}
@@ -114,9 +125,8 @@ export default function UserHome() {
                     <button
                       key={index}
                       onClick={() => setCurrentTrendingIndex(index)}
-                      className={`w-2 h-2 rounded-full transition-all ${
-                        index === currentTrendingIndex ? 'bg-yellow-400 w-6' : 'bg-white/40'
-                      }`}
+                      className={`w-2 h-2 rounded-full transition-all ${index === currentTrendingIndex ? 'bg-yellow-400 w-6' : 'bg-white/40'
+                        }`}
                     />
                   ))}
                 </div>
@@ -127,8 +137,8 @@ export default function UserHome() {
           {/* Recent Movies - Grid */}
           <section className="mt-6 sm:mt-8">
             <div className="flex items-center justify-between mb-4">
-              <h4 className="text-lg sm:text-xl font-semibold">Recent Movies</h4>
-              <button 
+              <h4 className="text-xl sm:text-1xl md:text-2xl lg:text-3xl font-bold mb-1 sm:mb-2">Recent Movies</h4>
+              <button
                 onClick={handleSeeMore}
                 className="text-xs sm:text-sm font-semibold bg-yellow-400 text-black px-3 sm:px-4 py-1.5 sm:py-2 rounded-full shadow hover:bg-yellow-500 transition-colors"
               >
@@ -137,6 +147,8 @@ export default function UserHome() {
             </div>
 
             <div className="mt-4">
+                                      <div className="h-0.5 w-full bg-slate-800 mb-4" />
+
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 sm:gap-5 md:gap-6 lg:gap-8">
                 {movies.map((m) => (
                   <div key={m._id || m.id}>

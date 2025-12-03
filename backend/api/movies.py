@@ -71,6 +71,7 @@ def get_all_movies(request):
                 "image_url": movie.get("image_url"),
                 "banner_url": movie.get("banner_url"),
                 "status": movie.get("status"),
+                "is_recent": movie.get("is_recent", False),
                 "created_at": created_at.isoformat() if created_at else None,
             }
             movies_response.append(movie_data)
