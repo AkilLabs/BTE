@@ -123,6 +123,17 @@ export default function AdminNavbar() {
                 )}
               </Link>
               <Link
+                to="/admin-dashboard/movie-management"
+                className={`hover:text-white transition duration-200 font-medium relative ${
+                  isActive('/admin-dashboard/movie-management') ? 'text-yellow-400' : ''
+                }`}
+              >
+                Movie management
+                {isActive('/admin-dashboard/movie-management') && (
+                  <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
+                )}
+              </Link>
+              <Link
                 to="/admin-dashboard/ticket-management"
                 className={`hover:text-white transition duration-200 font-medium relative ${
                   isActive('/admin-dashboard/ticket-management') ? 'text-yellow-400' : ''
