@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Film, MapPin, Clock } from 'lucide-react';
 import UserNavbar from '../../components/UserNavbar';
 import BottomNavigation from '../../components/BottomNavigation';
 import { useBooking } from '../../context/BookingContext';
@@ -299,15 +300,15 @@ export default function BookingConfirmation() {
               
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
-                  <svg className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zm4.5-1a.75.75 0 00-.75.75v.008c0 .414.336.75.75.75h.008a.75.75 0 00.75-.75V5.75a.75.75 0 00-.75-.75h-.008z"/></svg>
+                  <Film className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
                   <span className="text-sm text-slate-300">{movie.genre}</span>
                 </div>
                 <div className="flex items-start gap-3">
-                  <svg className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path d="M10.5 1.5H5.75A2.75 2.75 0 003 4.25v11A2.75 2.75 0 005.75 18h8.5A2.75 2.75 0 0017 15.25v-11A2.75 2.75 0 0014.25 1.5zm-1 2.5a.75.75 0 00-.75.75v5a.75.75 0 001.5 0v-5a.75.75 0 00-.75-.75z"/></svg>
+                  <MapPin className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
                   <span className="text-sm text-slate-300">{theaterLocation}</span>
                 </div>
                 <div className="flex items-start gap-3">
-                  <svg className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v3.26l-2.03-1.97a.75.75 0 00-1.06 1.06l4 3.86a.75.75 0 00.53.22.75.75 0 00.53-.22l4-3.86a.75.75 0 10-1.06-1.06L10.75 8.26V5z"/></svg>
+                  <Clock className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
                   <span className="text-sm text-slate-300">
                     {showDetails && `${showDetails.date} • ${showDetails.time}`}
                   </span>
