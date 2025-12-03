@@ -1,8 +1,9 @@
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import BottomNavigation from '../../components/BottomNavigation';
 import UserNavbar from '../../components/UserNavbar';
+import { useBooking } from '../../context/BookingContext';
 
 type SeatStatus = 'available' | 'reserved' | 'blocked' | 'selected';
 
@@ -114,7 +115,21 @@ const seatBaseClass =
 
 export default function Screen1() {
   const navigate = useNavigate();
+  const { setTotalPrice } = useBooking();
   const [selectedSeats, setSelectedSeats] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    // Retrieve selected seats from local storage
+    const storedSeats = localStorage.getItem('selectedSeats');
+    if (storedSeats) {
+      try {
+        const seatsArray = JSON.parse(storedSeats);
+        setSelectedSeats(new Set(seatsArray));
+      } catch (error) {
+        console.error('Error parsing stored seats:', error);
+      }
+    }
+  }, []);
 
   const handleSeatClick = (seatKey: string, status: SeatStatus) => {
     if (status === 'reserved' || status === 'blocked') return;
@@ -123,9 +138,16 @@ export default function Screen1() {
       const updated = new Set(prev);
       if (updated.has(seatKey)) {
         updated.delete(seatKey);
+        // console.log('Seat deselected:', seatKey);
       } else {
         updated.add(seatKey);
+        // console.log('Seat selected:', seatKey);
       }
+      
+      // Store selected seats in local storage
+      const selectedSeatsArray = Array.from(updated);
+      localStorage.setItem('selectedSeats', JSON.stringify(selectedSeatsArray));
+      
       return updated;
     });
   };
@@ -223,6 +245,12 @@ export default function Screen1() {
               <button
                 type="button"
                 disabled={selectedSeats.size === 0}
+                onClick={() => {
+                  setTotalPrice(totalPrice);
+                  const showDetails = JSON.parse(localStorage.getItem('selectedShowDetails') || '{}');
+                  const movieId = showDetails.movieId;
+                  navigate(`/booking/${movieId}/confirmation`);
+                }}
                 className="w-full rounded-full bg-yellow-400 px-8 py-3 text-sm font-semibold text-black transition hover:bg-yellow-300 disabled:bg-yellow-400/50 disabled:cursor-not-allowed sm:w-auto"
               >
                 Buy Ticket
