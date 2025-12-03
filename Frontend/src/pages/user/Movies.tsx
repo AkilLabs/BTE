@@ -55,7 +55,20 @@ export default function Movies() {
         }
         
         const data = await response.json();
-        setMovies(data.movies || []);
+
+        // Sort movies so the most recent appear first.
+        // Prefer `created_at` (ISO string) if present, otherwise `release_date`.
+        const moviesRaw = data.movies || [];
+        const sorted = moviesRaw.slice().sort((a: any, b: any) => {
+          const getTime = (m: any) => {
+            if (m?.created_at) return Date.parse(m.created_at);
+            if (m?.release_date) return Date.parse(m.release_date);
+            return 0;
+          };
+          return getTime(b) - getTime(a);
+        });
+
+        setMovies(sorted);
         setError(null);
       } catch (err) {
         console.error('Failed to fetch movies:', err);

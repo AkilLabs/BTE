@@ -30,9 +30,10 @@ def get_all_movies(request):
         # Fetch all movies from the collection
         movies = list(movies_collection.find())
 
-        # Extract only required fields
+        # Build response list and include created_at (ISO) and created_by
         movies_response = []
         for movie in movies:
+            created_at = movie.get("created_at")
             movie_data = {
                 "_id": str(movie["_id"]),
                 "title": movie.get("title"),
@@ -40,14 +41,9 @@ def get_all_movies(request):
                 "image_url": movie.get("image_url"),
                 "banner_url": movie.get("banner_url"),
                 "status": movie.get("status"),
+                "created_at": created_at.isoformat() if created_at else None,
             }
             movies_response.append(movie_data)
-        
-        # Convert ObjectId to string for JSON serialization
-        for movie in movies:
-            movie["_id"] = str(movie["_id"])
-            if "created_by" in movie and movie["created_by"]:
-                movie["created_by"] = str(movie["created_by"])
         
         return JsonResponse({
             "message": "Movies retrieved successfully",
