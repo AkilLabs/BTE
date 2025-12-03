@@ -18,6 +18,8 @@ import AdminProfile from './pages/admin/AdminProfile';
 import MovieManagement from './pages/admin/MovieManagement';
 import UserProfile from './pages/user/UserProfile';
 import PublishShows from './pages/admin/PublishShow';
+import Screen1 from './pages/common/Screen1';
+import Screen2 from './pages/common/Screen2';
 
 function App() {
   return (
@@ -37,6 +39,8 @@ function App() {
             <Route path="/new-password" element={<NewPassword />} />
             <Route path="/about-us" element={<AboutUs />} />
             <Route path="/profile" element={<UserProfile />} />
+            <Route path="/booking/:movieId/layout-1" element={<Screen1 />} />
+            <Route path="/select-seat-2" element={<Screen2 />} />
             
             {/* Admin Routes */}
             <Route path="/admin-dashboard" element={<AdminDashboard />} />
