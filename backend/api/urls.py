@@ -31,6 +31,6 @@ urlpatterns = [
     path("admin/movies/<str:movie_id>/publish-schedule/", publish_schedule, name="publish_schedule"),
 
     # Bookings and Shows
-    path("shows/<str:movie_id>/<str:show_id>/hold/", hold_seats, name="hold_seats"),
+    path("shows/<str:movie_id>/<str:time_str>/hold/", hold_seats, name="hold_seats"),
     path("bookings/<str:booking_id>/", get_booking, name="get_booking"),
 ]
