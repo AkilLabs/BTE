@@ -1,6 +1,6 @@
 import { ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
+import { useEffect, useMemo } from 'react';
 import BottomNavigation from '../../components/BottomNavigation';
 import UserNavbar from '../../components/UserNavbar';
 import { useBooking } from '../../context/BookingContext';
@@ -115,21 +115,46 @@ const seatBaseClass =
 
 export default function Screen1() {
   const navigate = useNavigate();
-  const { setTotalPrice } = useBooking();
-  const [selectedSeats, setSelectedSeats] = useState<Set<string>>(new Set());
+  const location = useLocation();
+  const { movieId } = useParams<{ movieId: string }>();
+  const { setTotalPrice, selectedSeats, setSelectedSeats, showDetails, setShowDetails } = useBooking();
 
   useEffect(() => {
-    // Retrieve selected seats from local storage
-    const storedSeats = localStorage.getItem('selectedSeats');
-    if (storedSeats) {
-      try {
-        const seatsArray = JSON.parse(storedSeats);
-        setSelectedSeats(new Set(seatsArray));
-      } catch (error) {
-        console.error('Error parsing stored seats:', error);
-      }
+    const state = (location.state || {}) as {
+      screen?: string;
+      time?: string;
+      movieTitle?: string;
+      price?: number;
+      date?: string | null;
+    };
+
+    if (Object.keys(state).length > 0) {
+      setShowDetails((prev) =>
+        prev ?? {
+          date: state.date,
+          time: state.time,
+          screen: state.screen,
+          movieTitle: state.movieTitle,
+          movieId: movieId || prev?.movieId,
+          price: state.price,
+        }
+      );
     }
-  }, []);
+  }, [location.state, setShowDetails, movieId]);
+
+  useEffect(() => {
+    return () => {
+      setTotalPrice(0);
+    };
+  }, [setTotalPrice]);
+
+  const selectedSeatSet = useMemo(() => new Set(selectedSeats), [selectedSeats]);
+  const seatPrice = showDetails?.price ?? 200;
+  const calculatedTotal = selectedSeats.length * seatPrice;
+
+  useEffect(() => {
+    setTotalPrice(calculatedTotal);
+  }, [calculatedTotal, setTotalPrice]);
 
   const handleSeatClick = (seatKey: string, status: SeatStatus) => {
     if (status === 'reserved' || status === 'blocked') return;
@@ -138,21 +163,12 @@ export default function Screen1() {
       const updated = new Set(prev);
       if (updated.has(seatKey)) {
         updated.delete(seatKey);
-        // console.log('Seat deselected:', seatKey);
       } else {
         updated.add(seatKey);
-        // console.log('Seat selected:', seatKey);
       }
-      
-      // Store selected seats in local storage
-      const selectedSeatsArray = Array.from(updated);
-      localStorage.setItem('selectedSeats', JSON.stringify(selectedSeatsArray));
-      
-      return updated;
+      return Array.from(updated);
     });
   };
-
-  const totalPrice = selectedSeats.size * 200;
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -196,7 +212,7 @@ export default function Screen1() {
                           type="button"
                           onClick={() => handleSeatClick(seat.key, seat.status)}
                           disabled={seat.status === 'reserved' || seat.status === 'blocked'}
-                          className={`${seatBaseClass} ${selectedSeats.has(seat.key) ? seatStyles['selected'] : seatStyles[seat.status]} ${
+                          className={`${seatBaseClass} ${selectedSeatSet.has(seat.key) ? seatStyles['selected'] : seatStyles[seat.status]} ${
                             seat.status === 'reserved' || seat.status === 'blocked' ? 'cursor-not-allowed' : 'cursor-pointer'
                           }`}
                         >
@@ -239,16 +255,14 @@ export default function Screen1() {
 
             <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-6">
               <div className="text-center sm:text-right">
-                <p className="text-[11px] uppercase tracking-[0.4em] text-white/40">Total ({selectedSeats.size})</p>
-                <p className="text-2xl font-semibold text-white">Rs {totalPrice.toFixed(2)}</p>
+                <p className="text-[11px] uppercase tracking-[0.4em] text-white/40">Total ({selectedSeats.length})</p>
+                <p className="text-2xl font-semibold text-white">Rs {calculatedTotal.toFixed(2)}</p>
               </div>
               <button
                 type="button"
-                disabled={selectedSeats.size === 0}
+                disabled={selectedSeats.length === 0}
                 onClick={() => {
-                  setTotalPrice(totalPrice);
-                  const showDetails = JSON.parse(localStorage.getItem('selectedShowDetails') || '{}');
-                  const movieId = showDetails.movieId;
+                  setTotalPrice(calculatedTotal);
                   navigate(`/booking/${movieId}/confirmation`);
                 }}
                 className="w-full rounded-full bg-yellow-400 px-8 py-3 text-sm font-semibold text-black transition hover:bg-yellow-300 disabled:bg-yellow-400/50 disabled:cursor-not-allowed sm:w-auto"

@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import UserNavbar from '../../components/UserNavbar';
 import BottomNavigation from '../../components/BottomNavigation';
 import { useBooking } from '../../context/BookingContext';
+import BankIcon from '../../assets/Bank.png';
+import UpiIcon from '../../assets/UPI.png';
 
 interface Movie {
   _id: string;
@@ -15,23 +17,40 @@ interface Movie {
   ticket_price?: number;
 }
 
-interface ShowDetails {
-  date: string;
-  time: string;
-  screen: string;
-  availableSeats: number;
-  movieTitle: string;
-  movieId: string;
-  price: number;
-}
+const DEFAULT_TICKET_PRICE = 200;
+
+const paymentOptions = [
+  {
+    id: 'bank1',
+    title: 'Bank Transfer 1',
+    icon: BankIcon,
+    lines: ['A/C no : BOG-GE64BG0000000593960340', 'Name: Vignesh'],
+  },
+  {
+    id: 'upi',
+    title: 'UPI Payment',
+    icon: UpiIcon,
+    lines: ['UPI ID : 6384754292'],
+  },
+  {
+    id: 'bank2',
+    title: 'Bank Transfer 2',
+    icon: BankIcon,
+    lines: ['A/C no : TBC-GE13TB7438645068100064', 'Name: Vignesh'],
+  },
+];
 
 export default function BookingConfirmation() {
   const { movieId } = useParams<{ movieId: string }>();
   const navigate = useNavigate();
-  const { totalPrice: contextTotalPrice } = useBooking();
+  const {
+    totalPrice: contextTotalPrice,
+    selectedSeats,
+    showDetails,
+    setSelectedSeats,
+    setTotalPrice,
+  } = useBooking();
   const [movie, setMovie] = useState<Movie | null>(null);
-  const [showDetails, setShowDetails] = useState<ShowDetails | null>(null);
-  const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
   const [selectedPayment, setSelectedPayment] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
@@ -54,37 +73,64 @@ export default function BookingConfirmation() {
       }
     };
 
-    // Get show details and selected seats from local storage
-    const storedShowDetails = localStorage.getItem('selectedShowDetails');
-    const storedSeats = localStorage.getItem('selectedSeats');
-    const storedEmail = localStorage.getItem('userEmail');
-    
-    if (storedShowDetails) {
-      setShowDetails(JSON.parse(storedShowDetails));
-      const showDetailsData = JSON.parse(storedShowDetails);
-      if (showDetailsData.screen) {
-        setTheaterLocation(showDetailsData.screen);
-      }
-    }
-    
-    if (storedSeats) {
-      setSelectedSeats(JSON.parse(storedSeats));
-    }
-
-    if (storedEmail) {
-      setUserEmail(storedEmail);
-    }
-
     if (movieId) {
       fetchMovie();
     }
   }, [movieId]);
 
-  const ticketPrice = showDetails?.price || movie?.ticket_price || 0;
+  useEffect(() => {
+    if (showDetails?.screen) {
+      setTheaterLocation(showDetails.screen);
+    }
+  }, [showDetails?.screen]);
+
+  useEffect(() => {
+    const storedEmail = localStorage.getItem('userEmail');
+    if (storedEmail) {
+      setUserEmail(storedEmail);
+    }
+  }, []);
+
+  const ticketPrice = showDetails?.price || movie?.ticket_price || DEFAULT_TICKET_PRICE;
   const totalPrice = contextTotalPrice > 0 ? contextTotalPrice : selectedSeats.length * ticketPrice;
+
+  const copyToClipboard = async (text: string) => {
+    if (!text) return;
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        return;
+      }
+    } catch (error) {
+      console.error('Clipboard API error:', error);
+    }
+
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    try {
+      document.execCommand('copy');
+    } finally {
+      document.body.removeChild(textarea);
+    }
+  };
+
+  const extractValue = (line?: string) => {
+    if (!line) return '';
+    const parts = line.split(':');
+    if (parts.length <= 1) return line.trim();
+    return parts.slice(1).join(':').trim();
+  };
 
   const handlePaymentSelect = (paymentMethod: string) => {
     setSelectedPayment(paymentMethod);
+    const selection = paymentOptions.find((option) => option.id === paymentMethod);
+    const copyText = extractValue(selection?.lines?.[0]);
+    copyToClipboard(copyText);
   };
 
   const getJwtFromCookie = () => {
@@ -119,6 +165,11 @@ export default function BookingConfirmation() {
   const handleContinue = async () => {
     if (!selectedPayment) {
       alert('Please select a payment method');
+      return;
+    }
+
+    if (!showDetails) {
+      alert('Missing show details. Please reselect your show.');
       return;
     }
 
@@ -191,6 +242,8 @@ export default function BookingConfirmation() {
       // Process payment here
       console.log('Processing payment with:', selectedPayment);
       alert('Booking confirmed! Payment processed.');
+      setSelectedSeats([]);
+      setTotalPrice(0);
     } catch (error) {
       console.error('Error holding seats:', error);
       alert('Failed to complete booking. Please try again.');
@@ -205,12 +258,30 @@ export default function BookingConfirmation() {
     );
   }
 
+  if (!showDetails || selectedSeats.length === 0) {
+    return (
+      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center gap-4 px-4 text-center">
+        <p className="text-slate-300 text-sm">Seat selection data has expired. Please reselect your show and seats.</p>
+        <button
+          type="button"
+          onClick={() => navigate(`/movies/${movieId}`)}
+          className="px-6 py-2 rounded-full border border-white/20 text-white hover:border-white/40 transition"
+        >
+          Go Back
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-black text-white pb-24">
       <UserNavbar />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-8 pt-24">
         {/* Movie Card */}
+       <div className="mb-4">
+          <h1 className="text-white text-2xl font-bold">Booking Confirmation :</h1>
+        </div>
         {movie && (
           <div className="rounded-2xl border border-white/15 bg-[#1c1c1c] p-6 mb-8 overflow-hidden flex flex-col sm:flex-row gap-6">
             {/* Poster */}
@@ -266,78 +337,66 @@ export default function BookingConfirmation() {
         <div className="mb-8">
           <h3 className="text-xl font-bold mb-6 text-white">Payment Method</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-            {/* Bank Transfer Option 1 */}
-            <button
-              onClick={() => handlePaymentSelect('bank1')}
-              className={`p-5 rounded-lg border-2 transition-all ${
-                selectedPayment === 'bank1'
-                  ? 'border-yellow-400 bg-yellow-400/15'
-                  : 'border-slate-700 bg-[#1c1c1c] hover:border-slate-600'
-              }`}
-            >
-              <svg className="w-8 h-8 mb-3 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1C6.48 1 2 5.48 2 11s4.48 10 10 10 10-4.48 10-10S17.52 1 12 1zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 7 15.5 7 14 7.67 14 8.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 7 8.5 7 7 7.67 7 8.5 7.67 10 8.5 10zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
-              <p className="text-xs font-semibold text-white">A/C no : 7681549944842</p>
-              <p className="text-xs text-slate-400 mt-1">IFSC : SBIN03725</p>
-            </button>
-
-            {/* UPI Option */}
-            <button
-              onClick={() => handlePaymentSelect('upi')}
-              className={`p-5 rounded-lg border-2 transition-all ${
-                selectedPayment === 'upi'
-                  ? 'border-yellow-400 bg-yellow-400/15'
-                  : 'border-slate-700 bg-[#1c1c1c] hover:border-slate-600'
-              }`}
-            >
-              <svg className="w-8 h-8 mb-3 text-blue-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-13c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5z"/></svg>
-              <p className="text-xs font-semibold text-white">UPI ID : harlee@paytm</p>
-            </button>
-
-            {/* Bank Transfer Option 2 */}
-            <button
-              onClick={() => handlePaymentSelect('bank2')}
-              className={`p-5 rounded-lg border-2 transition-all ${
-                selectedPayment === 'bank2'
-                  ? 'border-yellow-400 bg-yellow-400/15'
-                  : 'border-slate-700 bg-[#1c1c1c] hover:border-slate-600'
-              }`}
-            >
-              <svg className="w-8 h-8 mb-3 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1C6.48 1 2 5.48 2 11s4.48 10 10 10 10-4.48 10-10S17.52 1 12 1zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 7 15.5 7 14 7.67 14 8.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 7 8.5 7 7 7.67 7 8.5 7.67 10 8.5 10zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
-              <p className="text-xs font-semibold text-white">A/C no : 7681549944842</p>
-              <p className="text-xs text-slate-400 mt-1">IFSC : SBIN03725</p>
-            </button>
+            {paymentOptions.map(({ id, title, icon, lines }) => (
+              <button
+                key={id}
+                onClick={() => handlePaymentSelect(id)}
+                className={`p-5 rounded-2xl border-2 transition-all bg-[#1c1c1c] min-h-[190px] flex flex-col items-center text-center gap-2 shadow-[0_0_0_rgba(250,204,21,0)] ${
+                  selectedPayment === id
+                    ? 'border-yellow-400 bg-yellow-400/10 shadow-[0_0_35px_rgba(250,204,21,0.55)]'
+                    : 'border-slate-700 hover:border-yellow-400 hover:shadow-[0_0_30px_rgba(250,204,21,0.35)]'
+                }`}
+              >
+                <img src={icon} alt={title} className="w-12 h-12 object-contain" />
+                <p className="text-sm font-semibold text-white">{title}</p>
+                {lines.map((line) => (
+                  <p key={line} className="text-xs text-slate-300">
+                    {line}
+                  </p>
+                ))}
+              </button>
+            ))}
           </div>
 
           {/* Upload Screenshot */}
           <div className="mb-6">
-            <label className="block text-slate-300 text-xs font-medium mb-2">Upload payment screenshot (1-5 images)</label>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={handleFileChange}
-              className="block w-full text-sm text-slate-300 file:bg-slate-800 file:border file:border-slate-700 file:rounded-md file:py-2 file:px-3"
-            />
+            <div className="w-full border-2 border-dashed border-yellow-400 rounded-2xl p-6 text-center">
+              <label
+                htmlFor="payment-upload"
+                className="flex flex-col items-center justify-center gap-2 text-center cursor-pointer"
+              >
+                <span className="text-sm font-semibold text-yellow-300">Upload payment screenshot</span>
+                <span className="text-xs text-slate-400">Click or drop up to 5 images (jpg, png)</span>
+                <input
+                  id="payment-upload"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </label>
 
-            {previews.length > 0 && (
-              <div className="mt-3 flex gap-3 overflow-x-auto">
-                {previews.map((src, idx) => (
-                  <div key={idx} className="relative w-24 h-24 rounded overflow-hidden border border-white/10">
-                    <img src={src} alt={`preview-${idx}`} className="w-full h-full object-cover" />
-                    <button
-                      onClick={() => removePreview(idx)}
-                      className="absolute -top-2 -right-2 bg-black/70 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
-                      type="button"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
+              {previews.length > 0 && (
+                <div className="mt-3 flex gap-3 overflow-x-auto">
+                  {previews.map((src, idx) => (
+                    <div key={idx} className="relative w-24 h-24 rounded overflow-hidden border border-white/10">
+                      <img src={src} alt={`preview-${idx}`} className="w-full h-full object-cover" />
+                      <button
+                        onClick={() => removePreview(idx)}
+                        className="absolute -top-2 -right-2 bg-black/70 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
+                        type="button"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-3 text-sm text-slate-300">
+                {selectedFiles.length > 0 ? `${selectedFiles.length} file(s) selected` : 'No files selected yet'}
               </div>
-            )}
-
-            <div className="mt-3 text-sm text-slate-300">
-              {selectedFiles.length > 0 ? `${selectedFiles.length} file(s) selected` : 'No files selected'}
             </div>
           </div>
         </div>

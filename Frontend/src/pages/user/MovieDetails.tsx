@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { ChevronLeft, Play } from 'lucide-react';
 import UserNavbar from '../../components/UserNavbar';
 import BottomNavigation from '../../components/BottomNavigation';
+import { useBooking } from '../../context/BookingContext';
 
 interface Movie {
   _id: string;
@@ -25,10 +26,13 @@ interface Movie {
   show_schedule?: any;
 }
 
+const DEFAULT_TICKET_PRICE = 200;
+
 export default function MovieDetails() {
   const { movieId } = useParams<{ movieId: string }>();
   console.log("Movie ID:", movieId);
   const navigate = useNavigate();
+  const { setShowDetails, setSelectedSeats, setTotalPrice } = useBooking();
   const [movie, setMovie] = useState<Movie | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,16 +70,16 @@ export default function MovieDetails() {
 
   const handleContinue = () => {
     if (selectedScreen && selectedTime) {
-      // Store selected show details in local storage
-      const showDetails = {
+      setShowDetails({
         date: selectedDate,
         time: selectedTime,
         screen: selectedScreen,
-        //availableSeats: movie?.available_seats ?? 0,
         movieTitle: movie?.title,
-        movieId: movieId
-      };
-      localStorage.setItem('selectedShowDetails', JSON.stringify(showDetails));
+        movieId: movieId || undefined,
+        price: DEFAULT_TICKET_PRICE,
+      });
+      setSelectedSeats([]);
+      setTotalPrice(0);
 
       // Extract the screen number from selectedScreen
       const screenMatch = selectedScreen.match(/(\d+)/);
@@ -87,7 +91,7 @@ export default function MovieDetails() {
             screen: selectedScreen,
             time: selectedTime,
             movieTitle: movie?.title,
-            price: movie?.ticket_price,
+            price: DEFAULT_TICKET_PRICE,
             date: selectedDate,
           },
         });
@@ -97,7 +101,7 @@ export default function MovieDetails() {
             screen: selectedScreen,
             time: selectedTime,
             movieTitle: movie?.title,
-            price: movie?.ticket_price,
+            price: DEFAULT_TICKET_PRICE,
             date: selectedDate,
           },
         });
