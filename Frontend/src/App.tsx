@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ToastProvider } from './context/ToastContext';
+import { BookingProvider } from './context/BookingContext';
 import { ToastContainer } from './components/ToastContainer';
 import UserHome from './pages/user/UserHome';
 import Movies from './pages/user/Movies';
@@ -20,13 +21,15 @@ import UserProfile from './pages/user/UserProfile';
 import PublishShows from './pages/admin/PublishShow';
 import Screen1 from './pages/common/Screen1';
 import Screen2 from './pages/common/Screen2';
+import BookingConfirmation from './pages/user/BookingConfirmation';
 
 function App() {
   return (
-    <ToastProvider>
-      <BrowserRouter>
-        <div className="min-h-screen">
-          <Routes>
+    <BookingProvider>
+      <ToastProvider>
+        <BrowserRouter>
+          <div className="min-h-screen">
+            <Routes>
             <Route path="/" element={<UserHome />} />
             <Route path="/user-home" element={<UserHome />} />
             <Route path="/movies" element={<Movies />} />
@@ -41,6 +44,7 @@ function App() {
             <Route path="/profile" element={<UserProfile />} />
             <Route path="/booking/:movieId/layout-1" element={<Screen1 />} />
             <Route path="/select-seat-2" element={<Screen2 />} />
+            <Route path="/booking/:movieId/confirmation" element={<BookingConfirmation />} />
             
             {/* Admin Routes */}
             <Route path="/admin-dashboard" element={<AdminDashboard />} />
@@ -53,7 +57,8 @@ function App() {
           <ToastContainer />
         </div>
       </BrowserRouter>
-    </ToastProvider>
+      </ToastProvider>
+    </BookingProvider>
   );
 }
 

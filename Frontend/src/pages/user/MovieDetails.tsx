@@ -66,7 +66,22 @@ export default function MovieDetails() {
 
   const handleContinue = () => {
     if (selectedScreen && selectedTime) {
-      if (selectedScreen === 'screen1') {
+      // Store selected show details in local storage
+      const showDetails = {
+        date: selectedDate,
+        time: selectedTime,
+        screen: selectedScreen,
+        //availableSeats: movie?.available_seats ?? 0,
+        movieTitle: movie?.title,
+        movieId: movieId
+      };
+      localStorage.setItem('selectedShowDetails', JSON.stringify(showDetails));
+
+      // Extract the screen number from selectedScreen
+      const screenMatch = selectedScreen.match(/(\d+)/);
+      const screenNum = screenMatch ? screenMatch[1] : null;
+      
+      if (screenNum === '1') {
         navigate(`/booking/${movieId}/layout-1`, {
           state: {
             screen: selectedScreen,
