@@ -15,6 +15,7 @@ import AdminDashboard from './pages/admin/Dashboard';
 import NewMovie from './pages/admin/NewMovie';
 import TicketManagement from './pages/admin/TicketManagement';
 import AdminProfile from './pages/admin/AdminProfile';
+import UserProfile from './pages/user/UserProfile';
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
             <Route path="/otp-verification" element={<OtpVerification />} />
             <Route path="/new-password" element={<NewPassword />} />
             <Route path="/about-us" element={<AboutUs />} />
+            <Route path="/profile" element={<UserProfile />} />
             
             {/* Admin Routes */}
             <Route path="/admin-dashboard" element={<AdminDashboard />} />
