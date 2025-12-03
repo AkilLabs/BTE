@@ -9,7 +9,7 @@ urlpatterns = [
     path("user_signup/", user_signup, name="user_signup"),
     path("user_login/", user_login, name="user_login"),
     path("get_user_profile/", get_user_profile, name="get_user_profile"),
-    path("update_user_profile/", update_user_profile, name="update_user_profile"),
+    # path("update_user_profile/", update_user_profile, name="update_user_profile"),
 
     #Admin
     path("admin_signup/", admin_signup, name="admin_signup"),
@@ -28,8 +28,10 @@ urlpatterns = [
 
     # Movie Management
     path("add-movie/", add_movie, name="add_movie"),
+    path("admin/movies/<str:movie_id>/publish-schedule/", publish_schedule, name="publish_schedule"),
 
     # Bookings and Shows
     path("shows/<str:movie_id>/<str:show_id>/hold/", hold_seats, name="hold_seats"),
     path("bookings/<str:booking_id>/", get_booking, name="get_booking"),
+
 ]

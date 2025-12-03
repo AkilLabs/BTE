@@ -19,6 +19,7 @@ import MovieManagement from './pages/admin/MovieManagement';
 import UserProfile from './pages/user/UserProfile';
 import Screen1 from './pages/common/Screen1';
 import Screen2 from './pages/common/Screen2';
+import PublishShows from './pages/admin/PublishShow';
 
 function App() {
   return (
@@ -47,6 +48,7 @@ function App() {
             <Route path="/admin-dashboard/movie-management" element={<MovieManagement />} />
             <Route path="/admin-dashboard/ticket-management" element={<TicketManagement />} />
             <Route path="/admin-dashboard/profile" element={<AdminProfile />} />
+            <Route path="/admin-dashboard/movie-management/:movieId" element={<PublishShows />} />
           </Routes>
           <ToastContainer />
         </div>
