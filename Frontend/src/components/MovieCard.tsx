@@ -16,7 +16,7 @@ export default function MovieCard({ movieId, title, image }: MovieCardProps) {
 
   return (
     <div className="flex justify-center">
-      <div className="relative w-full h-64 rounded-2xl border border-slate-700 bg-black shadow-lg group cursor-pointer">
+      <div className="relative w-full aspect-[3/4] rounded-2xl border border-slate-700 bg-black shadow-lg group cursor-pointer">
         <div className="overflow-hidden rounded-2xl w-full h-full">
           <img src={image} alt={title} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-80" />
