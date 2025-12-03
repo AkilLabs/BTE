@@ -4,6 +4,7 @@ import { useUser } from '../../hooks/useUser';
 import UserNavbar from '../../components/UserNavbar';
 import BottomNavigation from '../../components/BottomNavigation';
 import MovieCard from '../../components/MovieCard';
+import UserFooter from '../../components/UserFooter';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 // Trending carousel images
@@ -146,6 +147,7 @@ export default function UserHome() {
 
         </main>
       </div>
+      <UserFooter />
       <BottomNavigation />
     </div>
   );
