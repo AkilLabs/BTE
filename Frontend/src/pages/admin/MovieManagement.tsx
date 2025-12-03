@@ -84,12 +84,20 @@ export default function MovieManagement() {
               <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-1 sm:mb-2">Movie Management</h1>
               <p className="text-slate-400 text-xs sm:text-sm md:text-base">Manage recent movies created by admins</p>
             </div>
-            <button
-              onClick={() => navigate('/admin-dashboard/new-movie')}
-              className="bg-yellow-400 text-black px-4 py-2 rounded-full hover:bg-yellow-500 transition duration-200 text-sm font-bold whitespace-nowrap"
-            >
-              New Movie
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => navigate('/admin-dashboard/trending-management')}
+                className="bg-white/8 border border-white/15 text-white px-4 py-2 rounded-full hover:bg-white/12 transition duration-200 text-sm font-medium whitespace-nowrap"
+              >
+                Trending
+              </button>
+              <button
+                onClick={() => navigate('/admin-dashboard/new-movie')}
+                className="bg-yellow-400 text-black px-4 py-2 rounded-full hover:bg-yellow-500 transition duration-200 text-sm font-bold whitespace-nowrap"
+              >
+                New Movie
+              </button>
+            </div>
           </div>
 
           <div className="mb-4 sm:mb-6 md:mb-8">

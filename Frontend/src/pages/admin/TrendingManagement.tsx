@@ -228,6 +228,10 @@ export default function TrendingManagement() {
     const [cropViewportSize, setCropViewportSize] = useState<Size | null>(null);
     const cropViewportRef = useRef<HTMLDivElement | null>(null);
 
+    // confirmation modal state
+    const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+    const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
     const getAuthToken = (): string | null => {
         const match = typeof document !== 'undefined' ? document.cookie.match(/(?:^|; )jwt=([^;]+)/) : null;
         if (match && match[1]) return decodeURIComponent(match[1]);
@@ -365,18 +369,58 @@ export default function TrendingManagement() {
         }
     };
 
-    const removeTrending = async (id: string) => {
-        if (!confirm('Remove this trending image?')) return;
+    const onRemoveTrendingClick = (id: string) => {
+        setDeleteConfirmId(id);
+        setShowConfirmDelete(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteConfirmId) return;
         try {
             const token = getAuthToken();
-            const res = await fetch(`${API_URL}/admin/trending/${id}/`, { method: 'DELETE', credentials: 'include', headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) } });
+            const res = await fetch(`${API_URL}/admin/trending/${deleteConfirmId}/`, { 
+                method: 'DELETE', 
+                credentials: 'include', 
+                headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) } 
+            });
             if (!res.ok) throw new Error('Delete failed');
             showToast('Removed', 'success');
-            setTrending((p) => p.filter((t) => t.id !== id));
+            
+            // Update state properly to avoid blank page
+            setTrending((prevTrending) => {
+                const updated = prevTrending.filter((t) => t.id !== deleteConfirmId);
+                // Clamp currentIndex if needed
+                if (currentIndex >= updated.length && updated.length > 0) {
+                    setCurrentIndex(updated.length - 1);
+                } else if (updated.length === 0) {
+                    setCurrentIndex(0);
+                }
+                return updated;
+            });
+            
+            setShowConfirmDelete(false);
+            setDeleteConfirmId(null);
         } catch (err) {
             console.error(err);
             showToast('Failed to remove', 'error');
+            setShowConfirmDelete(false);
+            setDeleteConfirmId(null);
         }
+    };
+
+    const cancelDelete = () => {
+        setShowConfirmDelete(false);
+        setDeleteConfirmId(null);
+    };
+
+    const handleAfterDelete = () => {
+        setShowConfirmDelete(false);
+        setDeleteConfirmId(null);
+        // Clamp currentIndex if it's out of bounds
+        setCurrentIndex((prev) => {
+            const newLength = trending.length > 0 ? trending.length - 1 : 0;
+            return prev >= newLength ? Math.max(0, newLength - 1) : prev;
+        });
     };
 
     const toggleMovieRecent = async (movieId: string, current: boolean | undefined) => {
@@ -453,9 +497,9 @@ export default function TrendingManagement() {
 
                                 {/* top-right remove/upload overlay (upload already top-right button) */}
                                 <div className="absolute top-3 right-3 flex items-center gap-2">
-                                    {/* show remove for first item as quick action */}
+                                    {/* show remove for current item as quick action */}
                                     {trending.length > 0 && (
-                                        <button onClick={() => removeTrending(trending[0].id)} className="bg-black/60 text-white px-2 py-1 rounded-full text-xs">Remove</button>
+                                        <button onClick={() => onRemoveTrendingClick(trending[currentIndex].id)} className="bg-black/60 text-white px-2 py-1 rounded-full text-xs hover:bg-black/80 transition">Remove</button>
                                     )}
                                 </div>
                             </div>
@@ -511,6 +555,36 @@ export default function TrendingManagement() {
                             <div className="mt-4 flex items-center gap-3">
                                 <label className="text-sm text-slate-400">Zoom</label>
                                 <input type="range" min={1} max={6} step={0.01} value={cropZoom} onChange={(e) => setCropZoom(Number(e.target.value))} className="w-full" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Confirmation Modal */}
+            {showConfirmDelete && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+                    <div className="bg-[#1c1c1c] border border-white/10 rounded-2xl w-full max-w-sm shadow-2xl">
+                        <div className="flex items-center justify-between p-6 border-b border-white/10">
+                            <div className="text-lg font-semibold text-white">Confirm Delete</div>
+                            <button className="text-white/60 hover:text-white transition" onClick={cancelDelete}><X /></button>
+                        </div>
+
+                        <div className="p-6">
+                            <p className="text-white/80 mb-6">Are you sure you want to remove this trending image? This action cannot be undone.</p>
+                            <div className="flex gap-3 justify-end">
+                                <button 
+                                    onClick={cancelDelete}
+                                    className="px-6 py-2 rounded-full border border-slate-600 text-white hover:bg-white/10 transition font-medium"
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    onClick={confirmDelete}
+                                    className="px-6 py-2 rounded-full bg-yellow-400 hover:bg-yellow-500 text-black transition font-bold"
+                                >
+                                    Delete
+                                </button>
                             </div>
                         </div>
                     </div>
