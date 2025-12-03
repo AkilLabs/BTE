@@ -22,6 +22,7 @@ import PublishShows from './pages/admin/PublishShow';
 import Screen1 from './pages/common/Screen1';
 import Screen2 from './pages/common/Screen2';
 import BookingConfirmation from './pages/user/BookingConfirmation';
+import BookingSuccess from './pages/user/BookingSuccess';
 
 function App() {
   return (
@@ -45,6 +46,7 @@ function App() {
             <Route path="/booking/:movieId/layout-1" element={<Screen1 />} />
             <Route path="/select-seat-2" element={<Screen2 />} />
             <Route path="/booking/:movieId/confirmation" element={<BookingConfirmation />} />
+            <Route path="/booking/success" element={<BookingSuccess />} />
             
             {/* Admin Routes */}
             <Route path="/admin-dashboard" element={<AdminDashboard />} />

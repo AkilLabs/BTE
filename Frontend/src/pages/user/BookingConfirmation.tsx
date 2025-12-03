@@ -241,9 +241,9 @@ export default function BookingConfirmation() {
 
       // Process payment here
       console.log('Processing payment with:', selectedPayment);
-      alert('Booking confirmed! Payment processed.');
       setSelectedSeats([]);
       setTotalPrice(0);
+      navigate('/booking/success');
     } catch (error) {
       console.error('Error holding seats:', error);
       alert('Failed to complete booking. Please try again.');
