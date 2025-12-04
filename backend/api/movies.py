@@ -13,7 +13,7 @@ from io import BytesIO
 from bson.objectid import ObjectId
 
 # MinIO / S3 configuration (use environment variables)
-MINIO_ENDPOINT = os.getenv('MINIO_ENDPOINT', '127.0.0.1:9000')
+MINIO_ENDPOINT = os.getenv('minio.haaka.online', '127.0.0.1:9000')
 MINIO_ACCESS_KEY = os.getenv('MINIO_ACCESS_KEY', '')
 MINIO_SECRET_KEY = os.getenv('MINIO_SECRET_KEY', '')
 MINIO_SECURE = os.getenv('MINIO_SECURE', 'false').lower() in ('1', 'true', 'yes')
