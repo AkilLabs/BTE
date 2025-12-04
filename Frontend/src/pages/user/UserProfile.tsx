@@ -128,7 +128,7 @@ export default function UserProfile() {
   const [editPhone, setEditPhone] = useState(user?.phone_number || '');
   const [isSubmittingProfile, setIsSubmittingProfile] = useState(false);
 
-  const VITE_API_URL = import.meta.env.VITE_API_URL || 'http://68.183.80.191:8000';
+  const VITE_API_URL = import.meta.env.VITE_API_URL || 'https://backend.haaka.online';
 
   const activeTickets = useMemo(
     () => tickets.filter((ticket) => ticket.status !== 'cancelled'),

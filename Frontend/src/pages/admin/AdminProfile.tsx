@@ -33,7 +33,7 @@ export default function AdminProfile() {
     // Fetch admin profile data
     const fetchProfile = async () => {
       try {
-        const response = await fetch('http://68.183.80.191:8000/api/get_user_profile/', {
+        const response = await fetch('https://backend.haaka.online/api/get_user_profile/', {
           method: 'GET',
           credentials: 'include',
         });
@@ -92,7 +92,7 @@ export default function AdminProfile() {
     setLoading(true);
     try {
       // In a real app, you'd send this to the backend
-      const response = await fetch('http://68.183.80.191:8000/api/update_profile/', {
+      const response = await fetch('https://backend.haaka.online/api/update_profile/', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

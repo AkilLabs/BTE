@@ -63,7 +63,7 @@ export default function BookingConfirmation() {
     // Fetch movie details
     const fetchMovie = async () => {
       try {
-        const response = await fetch(`http://68.183.80.191:8000/api/get-movie/${movieId}/`);
+        const response = await fetch(`https://backend.haaka.online/api/get-movie/${movieId}/`);
         if (!response.ok) throw new Error('Failed to fetch movie');
         const data = await response.json();
         setMovie(data.movie);
@@ -205,7 +205,7 @@ export default function BookingConfirmation() {
         formData.append('flow', 'seat');
         selectedFiles.forEach((f) => formData.append('screens', f));
 
-        response = await fetch(`http://68.183.80.191:8000/api/shows/${movieId}/${showDetails?.time}/hold/`, {
+        response = await fetch(`https://backend.haaka.online/api/shows/${movieId}/${showDetails?.time}/hold/`, {
           method: 'POST',
           body: formData,
           credentials: 'include',
@@ -222,7 +222,7 @@ export default function BookingConfirmation() {
         };
 
         response = await fetch(
-          `http://68.183.80.191:8000/api/shows/${movieId}/${showDetails?.time}/hold/`,
+          `https://backend.haaka.online/api/shows/${movieId}/${showDetails?.time}/hold/`,
           {
             method: 'POST',
             headers: {

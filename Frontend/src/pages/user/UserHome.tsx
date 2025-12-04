@@ -20,7 +20,7 @@ export default function UserHome() {
 
   useEffect(() => {
     // Fetch trending images and recent movies from backend
-    const API = 'http://68.183.80.191:8000/api';
+    const API = 'https://backend.haaka.online/api';
 
     const fetchTrending = async () => {
       try {
