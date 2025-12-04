@@ -224,7 +224,7 @@ export default function PublishShowAndScreens() {
       setLoading(true);
       const token = getAuthToken();
       const response = await axios.post(
-        `http://localhost:8000/api/admin/movies/${movieId}/publish-schedule/`,
+        `http://68.183.80.191:8000/api/admin/movies/${movieId}/publish-schedule/`,
         { schedule },
         { withCredentials: true, headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) } }
       );

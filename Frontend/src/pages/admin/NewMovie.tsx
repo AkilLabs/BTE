@@ -375,7 +375,7 @@ export default function NewMovie() {
   const bannerViewportRef = useRef<HTMLDivElement | null>(null);
   const skipNextPersist = useRef(false);
 
-  const VITE_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  const VITE_API_URL = import.meta.env.VITE_API_URL || 'http://68.183.80.191:8000';
 
   // Edit mode state: if `movieId` query param present, we fetch movie and prefill form
   const [editingMovieId, setEditingMovieId] = useState<string | null>(null);

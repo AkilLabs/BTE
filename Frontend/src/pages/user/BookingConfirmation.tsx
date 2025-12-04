@@ -205,7 +205,7 @@ export default function BookingConfirmation() {
         formData.append('flow', 'seat');
         selectedFiles.forEach((f) => formData.append('screens', f));
 
-        response = await fetch(`http://localhost:8000/api/shows/${movieId}/${showDetails?.time}/hold/`, {
+        response = await fetch(`http://68.183.80.191:8000/api/shows/${movieId}/${showDetails?.time}/hold/`, {
           method: 'POST',
           body: formData,
           credentials: 'include',
@@ -222,7 +222,7 @@ export default function BookingConfirmation() {
         };
 
         response = await fetch(
-          `http://localhost:8000/api/shows/${movieId}/${showDetails?.time}/hold/`,
+          `http://68.183.80.191:8000/api/shows/${movieId}/${showDetails?.time}/hold/`,
           {
             method: 'POST',
             headers: {
