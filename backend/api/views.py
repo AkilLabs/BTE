@@ -43,7 +43,7 @@ admin_collection = db['admin']
 movie_collection = db['movies']
 
 # MinIO Configuration
-MINIO_ENDPOINT = os.getenv('minio.haaka.online', 'localhost:9000')
+MINIO_ENDPOINT = 'minio.haaka.online'
 MINIO_ACCESS_KEY = os.getenv('MINIO_ACCESS_KEY', 'minioadmin')
 MINIO_SECRET_KEY = os.getenv('MINIO_SECRET_KEY', 'minioadmin')
 MINIO_BUCKET_NAME = os.getenv('MINIO_BUCKET_NAME', 'blacktickets-entertainment')
