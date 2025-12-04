@@ -135,6 +135,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:5173",
     "http://68.183.80.191:5173",
+    "https://blackticketentertainment.haaka.online",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
