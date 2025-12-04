@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import UserNavbar from '../../components/UserNavbar';
 import BottomNavigation from '../../components/BottomNavigation';
-import ConfirmIcon from '../../assets/confirm.png';
+import ConfirmIcon from '../../assets/Confirm.png';
 
 export default function BookingSuccess() {
   const navigate = useNavigate();
