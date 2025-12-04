@@ -14,7 +14,7 @@ type Movie = {
 };
 
 const MOVIES_PER_PAGE = 12;
-const API_URL = 'http://127.0.0.1:8000/api';
+const API_URL = 'http://68.183.80.191:8000/api';
 
 // // Movie poster URLs
 // const moviePosters = [

@@ -5,7 +5,7 @@ import { useToast } from '../../context/ToastContext';
 import MovieCard from '../../components/MovieCard';
 import { Star, UploadCloud, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
-const API_URL = 'http://127.0.0.1:8000/api';
+const API_URL = 'http://68.183.80.191:8000/api';
 
 type TrendingItem = {
     id: string;

@@ -46,7 +46,7 @@ export default function MovieDetails() {
     const fetchMovie = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`http://127.0.0.1:8000/api/get-movie/${movieId}/`);
+        const response = await fetch(`http://68.183.80.191:8000/api/get-movie/${movieId}/`);
         
         if (!response.ok) {
           throw new Error(`API error: ${response.status}`);

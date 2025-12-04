@@ -63,7 +63,7 @@ export default function BookingConfirmation() {
     // Fetch movie details
     const fetchMovie = async () => {
       try {
-        const response = await fetch(`http://127.0.0.1:8000/api/get-movie/${movieId}/`);
+        const response = await fetch(`http://68.183.80.191:8000/api/get-movie/${movieId}/`);
         if (!response.ok) throw new Error('Failed to fetch movie');
         const data = await response.json();
         setMovie(data.movie);
